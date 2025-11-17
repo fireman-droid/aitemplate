@@ -1,15 +1,25 @@
 <template>
-  <div class="template-preview">
-    <div class="preview-toolbar">
-      <button @click="zoomOut" :disabled="scale <= 0.5">-</button>
-      <span>{{ Math.round(scale * 100) }}%</span>
-      <button @click="zoomIn" :disabled="scale >= 2">+</button>
-    </div>
+  <el-card class="template-preview" shadow="hover">
+    <template #header>
+      <div class="preview-toolbar">
+        <span>文档预览</span>
+        <div class="zoom-controls">
+          <el-button-group>
+            <el-button :icon="ZoomOut" @click="zoomOut" :disabled="scale <= 0.5" size="small" />
+            <el-button size="small" disabled>{{ Math.round(scale * 100) }}%</el-button>
+            <el-button :icon="ZoomIn" @click="zoomIn" :disabled="scale >= 2" size="small" />
+          </el-button-group>
+        </div>
+      </div>
+    </template>
 
     <div class="preview-container" :style="{ transform: `scale(${scale})` }">
+      <!-- 暂无内容 -->
+      <el-empty v-if="!content" description="暂无内容" />
+      
       <!-- 文本预览 -->
       <div 
-        v-if="contentType === 'text'" 
+        v-else-if="contentType === 'text'" 
         class="text-preview"
         @mouseup="handleTextSelection"
       >
@@ -23,19 +33,6 @@
         @mouseup="handleTextSelection"
       >
         <div v-html="highlightedContent"></div>
-      </div>
-
-      <!-- 浮动添加按钮 -->
-      <div 
-        v-if="showAddButton" 
-        class="floating-add-button"
-        :style="{ top: buttonPosition.y + 'px', left: buttonPosition.x + 'px' }"
-        @click="handleAddPlaceholder"
-      >
-        <svg viewBox="0 0 24 24" width="16" height="16">
-          <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-        </svg>
-        添加占位符
       </div>
 
       <!-- 图片预览 -->
@@ -58,15 +55,25 @@
         <embed :src="content" type="application/pdf" width="100%" height="800px" />
       </div>
 
-      <div v-else class="empty-preview">
-        <p>暂无内容</p>
+      <!-- 浮动添加按钮 -->
+      <div 
+        v-if="showAddButton" 
+        class="floating-add-button"
+        :style="{ top: buttonPosition.y + 'px', left: buttonPosition.x + 'px' }"
+        @click="handleAddPlaceholder"
+      >
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        </svg>
+        添加占位符
       </div>
     </div>
-  </div>
+  </el-card>
 </template>
 
 <script>
 import { ref, computed } from 'vue'
+import { ZoomIn, ZoomOut } from '@element-plus/icons-vue'
 
 export default {
   name: 'TemplatePreview',
@@ -310,7 +317,9 @@ export default {
       getPlaceholderStyle,
       showAddButton,
       buttonPosition,
-      handleAddPlaceholder
+      handleAddPlaceholder,
+      ZoomIn,
+      ZoomOut
     }
   }
 }
@@ -318,38 +327,21 @@ export default {
 
 <style scoped>
 .template-preview {
-  background: white;
-  border-radius: 8px;
-  padding: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  height: 100%;
 }
 
 .preview-toolbar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 0.5rem;
-  background: #f5f5f5;
-  border-radius: 4px;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 16px;
 }
 
-.preview-toolbar button {
-  background: white;
-  border: 1px solid #ddd;
-  padding: 0.4rem 0.8rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.preview-toolbar button:hover:not(:disabled) {
-  background: #e0e0e0;
-}
-
-.preview-toolbar button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .preview-container {
@@ -430,14 +422,7 @@ export default {
   transform: scale(1.05);
 }
 
-.empty-preview {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  color: #999;
-  font-size: 1.1rem;
-}
+
 
 :deep(.placeholder-highlight) {
   background: rgba(66, 185, 131, 0.2);

@@ -6,6 +6,14 @@
         @file-selected="handleFileSelected"
         @error="handleError"
       />
+      <!-- 调试信息 -->
+      <div style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; font-size: 12px;">
+        <p><strong>调试信息:</strong></p>
+        <p>currentTemplate: {{ templateStore.currentTemplate ? '已设置 ✓' : '未设置 ✗' }}</p>
+        <p>isLoading: {{ templateStore.isLoading ? '加载中...' : '空闲' }}</p>
+        <p>error: {{ templateStore.error || '无' }}</p>
+        <el-button size="small" @click="testStore" style="margin-top: 10px;">测试 Store</el-button>
+      </div>
     </div>
 
     <div v-else class="editor-workspace">
@@ -59,16 +67,13 @@
       @confirm="handleAIGenerate"
       @cancel="closeAIDialog"
     />
-
-    <div v-if="notification" class="notification" :class="notification.type">
-      {{ notification.message }}
-    </div>
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useTemplateStore } from '@/stores/template'
 import { usePlaceholderStore } from '@/stores/placeholder'
 import { StorageService } from '@/services/storageService'
@@ -104,20 +109,47 @@ export default {
     const editingPlaceholder = ref(null)
     const aiDialogVisible = ref(false)
     const documentContent = ref('')
-    const notification = ref(null)
     const currentProjectId = ref(null)
 
     const handleFileSelected = async (file) => {
+      console.log('=== 开始上传文件 ===')
+      console.log('文件名:', file.name)
+      console.log('文件类型:', file.type)
+      console.log('文件大小:', file.size)
+      
       try {
         await templateStore.uploadTemplate(file)
-        showNotification('文件上传成功', 'success')
+        console.log('上传成功，currentTemplate:', templateStore.currentTemplate)
+        ElMessage.success('文件上传成功')
       } catch (error) {
-        showNotification('文件上传失败: ' + error.message, 'error')
+        console.error('上传失败:', error)
+        ElMessage.error('文件上传失败: ' + error.message)
       }
     }
 
     const handleError = (error) => {
-      showNotification(error, 'error')
+      ElMessage.error(error)
+    }
+
+    const testStore = () => {
+      console.log('=== 测试 Store ===')
+      console.log('templateStore:', templateStore)
+      console.log('currentTemplate:', templateStore.currentTemplate)
+      console.log('isLoading:', templateStore.isLoading)
+      console.log('error:', templateStore.error)
+      
+      // 手动设置一个测试模板
+      templateStore.currentTemplate = {
+        id: 'test',
+        name: '测试模板.docx',
+        content: '<p>这是测试内容</p>',
+        contentType: 'document',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+      
+      console.log('设置后 currentTemplate:', templateStore.currentTemplate)
+      ElMessage.success('已设置测试模板')
     }
 
     const handleTextSelect = (selection) => {
@@ -134,7 +166,7 @@ export default {
 
     const showPlaceholderDialog = () => {
       if (!selectedText.value) {
-        showNotification('请先选择文本', 'error')
+        ElMessage.warning('请先选择文本')
         return
       }
       // 确保是创建模式，清空编辑状态
@@ -155,7 +187,7 @@ export default {
     const handlePlaceholderConfirm = (data) => {
       if (dialogMode.value === 'create') {
         if (!selectedText.value) {
-          showNotification('选中的文本信息丢失，请重新选择', 'error')
+          ElMessage.error('选中的文本信息丢失，请重新选择')
           closeDialog()
           return
         }
@@ -178,10 +210,10 @@ export default {
         console.log('添加后占位符总数:', placeholderStore.placeholders.length)
         console.log('==================')
         
-        showNotification('占位符添加成功', 'success')
+        ElMessage.success('占位符添加成功')
       } else {
         placeholderStore.updatePlaceholder(editingPlaceholder.value.id, data)
-        showNotification('占位符更新成功', 'success')
+        ElMessage.success('占位符更新成功')
       }
       closeDialog()
       
@@ -191,10 +223,17 @@ export default {
       }
     }
 
-    const deletePlaceholder = (placeholderId) => {
-      if (confirm('确定要删除这个占位符吗？')) {
+    const deletePlaceholder = async (placeholderId) => {
+      try {
+        await ElMessageBox.confirm('确定要删除这个占位符吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
         placeholderStore.deletePlaceholder(placeholderId)
-        showNotification('占位符已删除', 'success')
+        ElMessage.success('占位符已删除')
+      } catch {
+        // 用户取消删除
       }
     }
 
@@ -217,7 +256,7 @@ export default {
     const showAIDialog = () => {
       // ===== 前置检查：确保已上传文档 =====
       if (!templateStore.currentTemplate) {
-        showNotification('请先上传文档', 'error')
+        ElMessage.warning('请先上传文档')
         return
       }
       
@@ -256,72 +295,60 @@ export default {
      * @param {Array} config.fields - 用户指定的字段列表
      */
     const handleAIGenerate = async (config) => {
-      try {
-        // 显示加载提示，让用户知道 AI 正在工作
-        showNotification('AI 正在分析文档...', 'info')
+      const loading = ElMessage({
+        message: 'AI 正在分析文档...',
+        type: 'info',
+        duration: 0
+      })
 
+      try {
         // ===== 步骤1: 提取文档纯文本内容 =====
-        // 因为 templateStore 中存储的是 HTML 格式的内容，
-        // 我们需要将其转换为纯文本，以便 AI 分析和后续的文本定位
-        const tempDiv = document.createElement('div')  // 创建临时 DOM 元素
-        tempDiv.innerHTML = templateStore.currentTemplate.content  // 将 HTML 内容注入
-        // 提取纯文本：textContent 优先，兼容 innerText
+        const tempDiv = document.createElement('div')
+        tempDiv.innerHTML = templateStore.currentTemplate.content
         const documentContent = tempDiv.textContent || tempDiv.innerText || ''
 
         // ===== 步骤2: 调用 AI 服务生成占位符建议 =====
-        // AIService.generatePlaceholders 会：
-        // - 将文档内容和配置发送给 AI 模型
-        // - AI 分析文档结构，识别需要动态替换的字段
-        // - 返回建议列表，每个建议包含：name（占位符名称）、text（原文本）、reason（原因）
         const suggestions = await AIService.generatePlaceholders(
           config,
           documentContent,
           config.documentType
         )
 
-        // 关闭 AI 配置对话框
+        loading.close()
         closeAIDialog()
 
         // ===== 步骤3: 验证 AI 返回结果 =====
         if (!suggestions || suggestions.length === 0) {
-          showNotification('AI 未识别到需要添加占位符的内容', 'info')
+          ElMessage.info('AI 未识别到需要添加占位符的内容')
           return
         }
 
         // ===== 步骤4: 批量处理 AI 建议，转换为占位符 =====
-        let addedCount = 0  // 记录成功添加的占位符数量
+        let addedCount = 0
         
         for (const suggestion of suggestions) {
-          // ===== 步骤4.1: 在文档中定位建议文本的位置 =====
-          // indexOf 返回文本首次出现的位置索引
-          // 注意：如果文档中有重复文本，这里只会找到第一个
-          // 更复杂的实现可能需要考虑上下文或使用更精确的定位算法
           const startOffset = documentContent.indexOf(suggestion.text)
           
-          // ===== 步骤4.2: 验证文本是否找到 =====
           if (startOffset !== -1) {
-            // ===== 步骤4.3: 创建占位符对象并添加到 store =====
             placeholderStore.addPlaceholder({
-              name: suggestion.name,           // AI 建议的占位符名称（如：甲方名称）
-              description: suggestion.reason || '',  // AI 给出的建议原因
+              name: suggestion.name,
+              description: suggestion.reason || '',
               position: {
-                startOffset: startOffset,      // 文本在文档中的起始位置
-                endOffset: startOffset + suggestion.text.length  // 结束位置 = 起始位置 + 文本长度
+                startOffset: startOffset,
+                endOffset: startOffset + suggestion.text.length
               }
             })
-            addedCount++  // 成功添加计数
+            addedCount++
           }
-          // 如果 startOffset === -1，说明在文档中没找到该文本，跳过此建议
         }
 
         // ===== 步骤5: 显示成功消息 =====
-        showNotification(`AI 成功生成 ${addedCount} 个占位符`, 'success')
+        ElMessage.success(`AI 成功生成 ${addedCount} 个占位符`)
         
       } catch (error) {
-        // ===== 错误处理 =====
-        // 可能的错误：网络问题、AI 服务异常、解析失败等
+        loading.close()
         console.error('AI生成失败:', error)
-        showNotification('AI 生成失败: ' + error.message, 'error')
+        ElMessage.error('AI 生成失败: ' + error.message)
         closeAIDialog()
       }
     }
@@ -329,11 +356,18 @@ export default {
     const downloadFile = async () => {
       if (!templateStore.currentTemplate) return
 
+      const loading = ElMessage({
+        message: '正在生成文档...',
+        type: 'info',
+        duration: 0
+      })
+
       try {
         const originalArrayBuffer = templateStore.currentTemplate.originalArrayBuffer
         
         if (!originalArrayBuffer) {
-          showNotification('原始文件数据丢失，请重新上传', 'error')
+          loading.close()
+          ElMessage.error('原始文件数据丢失，请重新上传')
           return
         }
 
@@ -371,9 +405,7 @@ export default {
         }
 
         // 在XML中进行替换
-        // 需要处理Word的XML格式，文本可能被分割在多个<w:t>标签中
         for (const { original, replacement } of replacements) {
-          // 转义XML特殊字符
           const escapedOriginal = original
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
@@ -384,7 +416,6 @@ export default {
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
           
-          // 简单替换（可能需要更复杂的逻辑处理跨标签的文本）
           xmlContent = xmlContent.replace(
             new RegExp(`(<w:t[^>]*>)([^<]*${escapedOriginal}[^<]*)(<\\/w:t>)`, 'g'),
             (match, openTag, text, closeTag) => {
@@ -408,10 +439,12 @@ export default {
         
         saveAs(blob, `${nameWithoutExt}_占位符.docx`)
         
-        showNotification('Word文档下载成功', 'success')
+        loading.close()
+        ElMessage.success('Word文档下载成功')
       } catch (error) {
+        loading.close()
         console.error('生成Word文档失败:', error)
-        showNotification('生成Word文档失败: ' + error.message, 'error')
+        ElMessage.error('生成Word文档失败: ' + error.message)
       }
     }
 
@@ -421,15 +454,8 @@ export default {
         templateStore.currentTemplate = project.template
         placeholderStore.placeholders = project.placeholders || []
         currentProjectId.value = project.id
-        showNotification('项目加载成功', 'success')
+        ElMessage.success('项目加载成功')
       }
-    }
-
-    const showNotification = (message, type = 'info') => {
-      notification.value = { message, type }
-      setTimeout(() => {
-        notification.value = null
-      }, 3000)
     }
 
     onMounted(() => {
@@ -448,9 +474,9 @@ export default {
       editingPlaceholder,
       aiDialogVisible,
       documentContent,
-      notification,
       handleFileSelected,
       handleError,
+      testStore,
       handleTextSelect,
       handleQuickAddPlaceholder,
       showPlaceholderDialog,
@@ -473,27 +499,28 @@ export default {
 }
 
 .upload-section {
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 2rem 0;
+  padding: 3rem 0;
 }
 
 .upload-section h2 {
   text-align: center;
   margin-bottom: 2rem;
-  color: #2c3e50;
+  color: #303133;
+  font-size: 24px;
 }
 
 .editor-workspace {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 16px;
 }
 
 .workspace-content {
   display: grid;
-  grid-template-columns: 1fr 350px;
-  gap: 1rem;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
 }
 
 .preview-section {
@@ -502,45 +529,9 @@ export default {
 
 .sidebar {
   position: sticky;
-  top: 1rem;
+  top: 24px;
   height: fit-content;
-}
-
-.notification {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  padding: 1rem 1.5rem;
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-  animation: slideIn 0.3s ease;
-  z-index: 1000;
-}
-
-.notification.success {
-  background: #4caf50;
-  color: white;
-}
-
-.notification.error {
-  background: #f44336;
-  color: white;
-}
-
-.notification.info {
-  background: #2196f3;
-  color: white;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(400px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  max-height: calc(100vh - 120px);
 }
 
 @media (max-width: 1024px) {
@@ -550,6 +541,7 @@ export default {
 
   .sidebar {
     position: static;
+    max-height: none;
   }
 }
 </style>

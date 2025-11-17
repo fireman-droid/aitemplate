@@ -10,15 +10,20 @@ export const useTemplateStore = defineStore('template', {
 
   actions: {
     async uploadTemplate(file) {
+      console.log('[Store] 开始上传模板')
       this.isLoading = true
       this.error = null
       
       try {
         const contentType = this.detectContentType(file)
+        console.log('[Store] 检测到内容类型:', contentType)
+        
         const content = await this.readFile(file, contentType)
+        console.log('[Store] 文件读取完成，内容长度:', content?.length || 0)
         
         // 保存原始文件的ArrayBuffer用于后续处理
         const arrayBuffer = await file.arrayBuffer()
+        console.log('[Store] ArrayBuffer 大小:', arrayBuffer.byteLength)
         
         this.currentTemplate = {
           id: Date.now().toString(),
@@ -30,7 +35,10 @@ export const useTemplateStore = defineStore('template', {
           createdAt: new Date(),
           updatedAt: new Date()
         }
+        
+        console.log('[Store] 模板设置完成:', this.currentTemplate.name)
       } catch (error) {
+        console.error('[Store] 上传失败:', error)
         this.error = error.message
         throw error
       } finally {

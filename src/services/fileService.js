@@ -25,14 +25,24 @@ export class FileService {
 
     // 检查文件类型
     const isTypeAccepted = acceptedTypes.some(type => {
+      // 处理通配符类型 (如 image/*)
       if (type.endsWith('/*')) {
         const prefix = type.split('/')[0]
         return file.type.startsWith(prefix + '/')
       }
+      // 处理文件扩展名 (如 .doc, .docx)
+      if (type.startsWith('.')) {
+        return file.name.toLowerCase().endsWith(type.toLowerCase())
+      }
+      // 处理 MIME 类型
       return file.type === type
     })
 
     if (!isTypeAccepted) {
+      console.log('[FileService] 文件类型不匹配')
+      console.log('文件类型:', file.type)
+      console.log('文件名:', file.name)
+      console.log('允许的类型:', acceptedTypes)
       return {
         valid: false,
         error: '不支持的文件类型'

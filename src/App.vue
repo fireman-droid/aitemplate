@@ -1,19 +1,17 @@
 <template>
-  <div id="app">
-    <nav class="navbar">
-      <div class="nav-container">
-        <h1 class="logo">模板占位符编辑器</h1>
-        <div class="nav-links">
-          <router-link to="/" class="nav-link">主页</router-link>
-          <router-link to="/editor" class="nav-link">编辑器</router-link>
-          <router-link to="/settings" class="nav-link">设置</router-link>
+  <el-container id="app">
+    <el-header class="app-header">
+      <div class="header-content">
+        <div class="logo">
+          <el-icon :size="24"><Document /></el-icon>
+          <span>模板占位符编辑器</span>
         </div>
       </div>
-    </nav>
-    <main class="main-content">
+    </el-header>
+    <el-main class="app-main">
       <router-view />
-    </main>
-  </div>
+    </el-main>
+  </el-container>
 </template>
 
 <script>
@@ -22,61 +20,48 @@ export default {
 }
 </script>
 
-<style scoped>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
 #app {
   min-height: 100vh;
-  display: flex;
-  flex-direction: column;
 }
 
-.navbar {
-  background: #2c3e50;
-  color: white;
-  padding: 1rem 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+.app-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  padding: 0 !important;
 }
 
-.nav-container {
-  max-width: 1200px;
+.header-content {
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 24px;
+  height: 100%;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .logo {
-  margin: 0;
-  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  font-size: 20px;
   font-weight: 600;
 }
 
-.nav-links {
-  display: flex;
-  gap: 2rem;
-}
-
-.nav-link {
-  color: white;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  transition: background 0.3s;
-}
-
-.nav-link:hover {
-  background: rgba(255,255,255,0.1);
-}
-
-.nav-link.router-link-active {
-  background: rgba(255,255,255,0.2);
-}
-
-.main-content {
-  flex: 1;
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
+.app-main {
+  background: #f5f7fa;
+  padding: 24px !important;
 }
 </style>
