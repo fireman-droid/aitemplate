@@ -1,15 +1,34 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="AI 自动生成占位符"
-    width="600px"
+    title="AI 智能填充内容"
+    width="650px"
     @close="handleClose"
   >
-    <el-form :model="formData" label-width="100px">
-      <el-form-item label="文档用途">
+    <el-form :model="formData" label-width="120px">
+      <el-form-item label="上传资料文件" required>
+        <el-upload
+          ref="uploadRef"
+          :auto-upload="false"
+          :show-file-list="true"
+          :limit="1"
+          accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          :on-change="handleFileChange"
+          :on-remove="handleFileRemove"
+        >
+          <el-button :icon="Upload">选择 Word 文件</el-button>
+          <template #tip>
+            <div class="el-upload__tip">
+              上传包含实际数据的 Word 文档，AI 将从中提取信息填充到表单
+            </div>
+          </template>
+        </el-upload>
+      </el-form-item>
+
+      <el-form-item label="文档类型">
         <el-input
           v-model="formData.documentType"
-          placeholder="例如：离婚起诉状、销售合同、邀请函（可选）"
+          placeholder="例如：个人简历、合同资料、案件材料（可选）"
         >
           <template #append>
             <el-button :icon="InfoFilled" @click="showDocTypeHelp" />
@@ -18,22 +37,23 @@
       </el-form-item>
 
       <el-alert
-        type="success"
+        type="info"
         :closable="false"
         show-icon
       >
         <template #title>
-          AI 将分析文档内容，自动识别需要替换的可变信息并生成占位符建议
+          AI 将从资料文件中提取信息，自动填充到模板的占位符中
         </template>
       </el-alert>
 
-      <el-divider content-position="left">文档内容预览</el-divider>
+      <el-divider content-position="left">资料文件预览</el-divider>
 
       <el-input
         v-model="previewContent"
         type="textarea"
         :rows="8"
         readonly
+        placeholder="请先上传资料文件"
         class="preview-textarea"
       />
     </el-form>
@@ -44,8 +64,9 @@
         type="primary"
         @click="handleGenerate"
         :loading="isGenerating"
+        :disabled="!dataFile"
       >
-        {{ isGenerating ? '生成中...' : '开始生成' }}
+        {{ isGenerating ? 'AI 分析中...' : '开始填充' }}
       </el-button>
     </template>
   </el-dialog>
@@ -53,8 +74,9 @@
 
 <script>
 import { ref, watch, computed } from 'vue'
-import { ElMessageBox } from 'element-plus'
-import { InfoFilled } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { InfoFilled, Upload } from '@element-plus/icons-vue'
+import { DocumentService } from '@/services/documentService'
 
 export default {
   name: 'AIPlaceholderDialog',
@@ -63,15 +85,14 @@ export default {
       type: Boolean,
       default: false
     },
-    documentContent: {
-      type: String,
-      default: ''
+    placeholders: {
+      type: Array,
+      default: () => []
     }
   },
   emits: ['confirm', 'cancel'],
   setup(props, { emit }) {
     const formData = ref({
-      mode: 'real',
       provider: 'kimi',
       apiKey: 'sk-Y1Aby7GAeIqfxU7MbwBWRno8F6oHfDmy02hREFSKDM5rTiCO',
       apiUrl: '',
@@ -80,6 +101,8 @@ export default {
     })
     const isGenerating = ref(false)
     const previewContent = ref('')
+    const dataFile = ref(null)
+    const uploadRef = ref(null)
 
     const dialogVisible = computed({
       get: () => props.visible,
@@ -92,33 +115,73 @@ export default {
 
     watch(() => props.visible, (newVal) => {
       if (newVal) {
-        updatePreview()
+        // 重置状态
+        dataFile.value = null
+        previewContent.value = ''
+        formData.value.documentType = ''
       }
     })
 
-    watch(() => formData.value.documentType, () => {
-      updatePreview()
-    })
+    const handleFileChange = async (uploadFile) => {
+      const file = uploadFile.raw
+      
+      if (!file) return
 
-    const updatePreview = () => {
-      if (formData.value.documentType) {
-        previewContent.value = `文档类型：${formData.value.documentType}\n\n${props.documentContent}`
-      } else {
-        previewContent.value = props.documentContent
+      try {
+        // 读取 Word 文档内容
+        const result = await DocumentService.parseWordDocument(file)
+        previewContent.value = result.html
+        
+        // 提取纯文本
+        const tempDiv = document.createElement('div')
+        tempDiv.innerHTML = result.html
+        const plainText = tempDiv.textContent || tempDiv.innerText || ''
+        
+        dataFile.value = {
+          file: file,
+          content: plainText,
+          html: result.html
+        }
+        
+        ElMessage.success('资料文件读取成功')
+      } catch (error) {
+        console.error('文件读取失败:', error)
+        ElMessage.error('文件读取失败: ' + error.message)
+        dataFile.value = null
+        previewContent.value = ''
       }
+    }
+
+    const handleFileRemove = () => {
+      dataFile.value = null
+      previewContent.value = ''
     }
 
     const showDocTypeHelp = () => {
       ElMessageBox.alert(
-        '常见文档类型：离婚起诉状、民事起诉状、劳动合同、销售合同、租赁合同、邀请函、通知书、证明文件等。\n\n提供文档类型有助于 AI 更准确地识别占位符。',
+        '常见文档类型：个人简历、劳动合同、销售合同、租赁合同、案件材料、证明文件等。\n\n提供文档类型有助于 AI 更准确地提取信息。',
         '文档类型说明',
         { confirmButtonText: '知道了' }
       )
     }
 
     const handleGenerate = () => {
+      if (!dataFile.value) {
+        ElMessage.warning('请先上传资料文件')
+        return
+      }
+
       isGenerating.value = true
-      emit('confirm', { ...formData.value })
+      
+      // 传递给 AI 的数据
+      const aiData = {
+        ...formData.value,
+        dataFileContent: dataFile.value.content,
+        placeholders: props.placeholders,
+        documentType: formData.value.documentType
+      }
+      
+      emit('confirm', aiData)
     }
 
     const handleClose = () => {
@@ -131,7 +194,12 @@ export default {
       dialogVisible,
       isGenerating,
       previewContent,
+      dataFile,
+      uploadRef,
       InfoFilled,
+      Upload,
+      handleFileChange,
+      handleFileRemove,
       handleGenerate,
       handleClose,
       showDocTypeHelp

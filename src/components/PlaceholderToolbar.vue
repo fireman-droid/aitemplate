@@ -9,34 +9,7 @@
       <span>AI 生成</span>
     </el-button>
 
-    <el-button 
-      type="success"
-      @click="$emit('add-placeholder')"
-      :disabled="!canAddPlaceholder"
-    >
-      <el-icon><Plus /></el-icon>
-      <span>手动添加</span>
-    </el-button>
 
-    <el-divider direction="vertical" />
-
-    <el-button 
-      @click="$emit('undo')"
-      :disabled="!canUndo"
-      :icon="RefreshLeft"
-      circle
-      title="撤销"
-    />
-
-    <el-button 
-      @click="$emit('redo')"
-      :disabled="!canRedo"
-      :icon="RefreshRight"
-      circle
-      title="重做"
-    />
-
-    <el-divider direction="vertical" />
 
     <el-button 
       type="info"
@@ -50,31 +23,9 @@
 </template>
 
 <script>
-import { RefreshLeft, RefreshRight } from '@element-plus/icons-vue'
-
 export default {
   name: 'PlaceholderToolbar',
-  props: {
-    canAddPlaceholder: {
-      type: Boolean,
-      default: false
-    },
-    canUndo: {
-      type: Boolean,
-      default: false
-    },
-    canRedo: {
-      type: Boolean,
-      default: false
-    }
-  },
-  emits: ['ai-generate', 'add-placeholder', 'undo', 'redo', 'download'],
-  setup() {
-    return {
-      RefreshLeft,
-      RefreshRight
-    }
-  }
+  emits: ['ai-generate', 'download']
 }
 </script>
 

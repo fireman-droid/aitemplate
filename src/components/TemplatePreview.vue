@@ -21,7 +21,6 @@
       <div 
         v-else-if="contentType === 'text'" 
         class="text-preview"
-        @mouseup="handleTextSelection"
       >
         <div v-html="highlightedContent"></div>
       </div>
@@ -30,7 +29,6 @@
       <div 
         v-else-if="contentType === 'document'" 
         class="document-preview"
-        @mouseup="handleTextSelection"
       >
         <div v-html="highlightedContent"></div>
       </div>
@@ -55,18 +53,6 @@
         <embed :src="content" type="application/pdf" width="100%" height="800px" />
       </div>
 
-      <!-- 浮动添加按钮 -->
-      <div 
-        v-if="showAddButton" 
-        class="floating-add-button"
-        :style="{ top: buttonPosition.y + 'px', left: buttonPosition.x + 'px' }"
-        @click="handleAddPlaceholder"
-      >
-        <svg viewBox="0 0 24 24" width="16" height="16">
-          <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-        </svg>
-        添加占位符
-      </div>
     </div>
   </el-card>
 </template>
@@ -95,12 +81,9 @@ export default {
       default: null
     }
   },
-  emits: ['text-select', 'placeholder-click', 'add-placeholder'],
-  setup(props, { emit }) {
+  emits: [],
+  setup(props) {
     const scale = ref(1)
-    const showAddButton = ref(false)
-    const buttonPosition = ref({ x: 0, y: 0 })
-    const currentSelection = ref(null)
 
     const zoomIn = () => {
       if (scale.value < 2) {
@@ -115,14 +98,45 @@ export default {
     }
 
     const highlightedContent = computed(() => {
-      if (!props.content || (props.contentType !== 'text' && props.contentType !== 'document')) return ''
+      console.log('=== TemplatePreview 渲染 ===')
+      console.log('content 长度:', props.content?.length)
+      console.log('contentType:', props.contentType)
       
+      if (!props.content || (props.contentType !== 'text' && props.contentType !== 'document')) {
+        console.log('没有内容或类型不匹配')
+        return ''
+      }
+      
+      // 检查内容中是否还有占位符（{xxx} 格式）
+      const hasPlaceholders = /\{[^}]+\}/.test(props.content)
+      console.log('是否包含占位符:', hasPlaceholders)
+      
+      // 如果没有占位符了，说明已经填充完成，直接返回内容
+      if (!hasPlaceholders) {
+        console.log('✓ 内容已填充，直接显示')
+        console.log('内容预览:', props.content.substring(0, 200))
+        return props.content
+      }
+      
+      console.log('内容中还有占位符，使用高亮模式')
+      
+      // 如果没有占位符定义，直接返回原内容
       if (props.placeholders.length === 0) {
         return props.content
       }
 
+      // 过滤掉 position 为 0 的占位符（这些是自动提取的，不需要高亮）
+      const validPlaceholders = props.placeholders.filter(p => 
+        p.position.startOffset !== 0 || p.position.endOffset !== 0
+      )
+
+      // 如果没有有效的占位符位置，直接返回原内容
+      if (validPlaceholders.length === 0) {
+        return props.content
+      }
+
       console.log('=== 渲染占位符 ===')
-      console.log('占位符数量:', props.placeholders.length)
+      console.log('有效占位符数量:', validPlaceholders.length)
       console.log('文档类型:', props.contentType)
 
       // 对于HTML内容，需要在纯文本层面计算位置
@@ -138,7 +152,7 @@ export default {
       }
       
       // 按位置倒序排列，从后往前插入，避免位置偏移
-      const sortedPlaceholders = [...props.placeholders].sort(
+      const sortedPlaceholders = [...validPlaceholders].sort(
         (a, b) => b.position.startOffset - a.position.startOffset
       )
 
@@ -192,112 +206,6 @@ export default {
       return workingContent
     })
 
-    const handleTextSelection = (event) => {
-      const selection = window.getSelection()
-      const selectedText = selection.toString().trim()
-      
-      if (selectedText && selectedText.length > 0) {
-        const range = selection.getRangeAt(0)
-        
-        // 获取预览容器的DOM元素
-        const previewElement = event.currentTarget
-        
-        // 计算选中文本在整个内容中的准确位置
-        let startOffset = 0
-        let endOffset = 0
-        
-        if (props.contentType === 'text') {
-          // 纯文本模式：直接使用内容
-          startOffset = props.content.indexOf(selectedText)
-          endOffset = startOffset + selectedText.length
-        } else if (props.contentType === 'document') {
-          // HTML文档模式：需要基于原始内容计算位置
-          // 提取原始内容的纯文本
-          const tempDiv = document.createElement('div')
-          tempDiv.innerHTML = props.content
-          const originalPlainText = tempDiv.textContent || tempDiv.innerText || ''
-          
-          // 获取当前显示位置（包含已有占位符）
-          const preRange = document.createRange()
-          preRange.selectNodeContents(previewElement)
-          preRange.setEnd(range.startContainer, range.startOffset)
-          const displayTextBefore = preRange.toString()
-          
-          // 计算已有占位符造成的偏移
-          let offset = 0
-          const sortedPlaceholders = [...props.placeholders].sort((a, b) => a.position.startOffset - b.position.startOffset)
-          
-          for (const ph of sortedPlaceholders) {
-            if (ph.position.startOffset < displayTextBefore.length - offset) {
-              // 这个占位符在选中位置之前
-              const originalLength = ph.position.endOffset - ph.position.startOffset
-              const displayLength = `{${ph.name}}`.length
-              offset += (displayLength - originalLength)
-            }
-          }
-          
-          // 在原始文本中的实际位置
-          startOffset = displayTextBefore.length - offset
-          endOffset = startOffset + selectedText.length
-          
-          // 验证位置是否正确
-          const actualText = originalPlainText.substring(startOffset, endOffset)
-          if (actualText !== selectedText) {
-            console.warn('位置计算可能不准确，尝试直接查找')
-            // 降级方案：直接在原始文本中查找
-            const foundIndex = originalPlainText.indexOf(selectedText, Math.max(0, startOffset - 50))
-            if (foundIndex !== -1) {
-              startOffset = foundIndex
-              endOffset = startOffset + selectedText.length
-            }
-          }
-        }
-        
-        if (startOffset !== -1) {
-          currentSelection.value = {
-            text: selectedText,
-            startOffset: startOffset,
-            endOffset: endOffset
-          }
-          
-          // 调试信息
-          console.log('=== 文本选择信息 ===')
-          console.log('选中的文本:', selectedText)
-          console.log('开始位置:', startOffset)
-          console.log('结束位置:', endOffset)
-          console.log('文档类型:', props.contentType)
-          console.log('文档内容长度:', props.content.length)
-          console.log('==================')
-          
-          // 获取选中区域的位置，显示浮动按钮
-          const rect = range.getBoundingClientRect()
-          const containerRect = event.currentTarget.getBoundingClientRect()
-          
-          buttonPosition.value = {
-            x: rect.left - containerRect.left + rect.width / 2 - 60,
-            y: rect.bottom - containerRect.top + 10
-          }
-          
-          showAddButton.value = true
-          
-          emit('text-select', currentSelection.value)
-        }
-      } else {
-        // 没有选中文本，隐藏按钮
-        showAddButton.value = false
-        currentSelection.value = null
-      }
-    }
-
-    const handleAddPlaceholder = () => {
-      if (currentSelection.value) {
-        emit('add-placeholder', currentSelection.value)
-        showAddButton.value = false
-        // 清除选中状态
-        window.getSelection().removeAllRanges()
-      }
-    }
-
     const getPlaceholderStyle = (placeholder) => {
       const pos = placeholder.position
       return {
@@ -313,11 +221,7 @@ export default {
       zoomIn,
       zoomOut,
       highlightedContent,
-      handleTextSelection,
       getPlaceholderStyle,
-      showAddButton,
-      buttonPosition,
-      handleAddPlaceholder,
       ZoomIn,
       ZoomOut
     }
@@ -436,34 +340,7 @@ export default {
   background: rgba(66, 185, 131, 0.4);
 }
 
-.floating-add-button {
-  position: absolute;
-  background: #42b983;
-  color: white;
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  box-shadow: 0 4px 12px rgba(66, 185, 131, 0.4);
-  z-index: 100;
-  animation: fadeIn 0.2s ease;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
 
-.floating-add-button:hover {
-  background: #359268;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(66, 185, 131, 0.5);
-}
-
-.floating-add-button svg {
-  flex-shrink: 0;
-}
 
 @keyframes fadeIn {
   from {
