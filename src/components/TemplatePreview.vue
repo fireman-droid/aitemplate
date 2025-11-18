@@ -231,7 +231,8 @@ export default {
 
 <style scoped>
 .template-preview {
-  height: 100%;
+  height: auto;
+  min-height: 100%;
 }
 
 .preview-toolbar {
@@ -251,8 +252,9 @@ export default {
 .preview-container {
   transform-origin: top left;
   transition: transform 0.2s;
-  min-height: 400px;
+  min-height: 100vh;
   position: relative;
+  overflow: visible;
 }
 
 .text-preview {

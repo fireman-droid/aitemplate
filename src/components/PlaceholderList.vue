@@ -1,11 +1,9 @@
 <template>
-  <el-card class="placeholder-list" shadow="hover">
-    <template #header>
-      <div class="list-header">
-        <span>占位符填充表单</span>
-        <el-tag type="success" round>{{ placeholders.length }}</el-tag>
-      </div>
-    </template>
+  <div class="placeholder-list">
+    <div class="list-header">
+      <h3>填充文档</h3>
+      <el-tag type="success" round>{{ placeholders.length }} 个字段</el-tag>
+    </div>
 
     <el-empty 
       v-if="placeholders.length === 0" 
@@ -20,77 +18,302 @@
           placeholder="搜索占位符..."
           clearable
           :prefix-icon="Search"
+          size="large"
         />
       </div>
 
-      <el-scrollbar max-height="550px">
       <el-form :model="formData" label-position="top" class="placeholder-form">
-        <el-form-item 
-          v-for="placeholder in filteredPlaceholders"
-          :key="placeholder.id"
-          class="form-item"
-        >
-          <template #label>
-            <div class="form-label">
-              <span class="label-text">{{ getPlaceholderLabel(placeholder.name) }}</span>
-              <el-tag size="small" type="info">{{ placeholder.name }}</el-tag>
-            </div>
-          </template>
-          
-          <!-- 选择框类型（性别、是否等） -->
-          <el-select 
-            v-if="isCheckboxField(placeholder.name)"
-            v-model="formData[placeholder.name]"
-            placeholder="请选择"
-            style="width: 100%"
-            clearable
-          >
-            <el-option label="☑ 选中" value="☑" />
-            <el-option label="□ 未选中" value="□" />
-          </el-select>
-          
-          <!-- 大文本类型 -->
-          <el-input
-            v-else-if="isTextareaField(placeholder.name)"
-            v-model="formData[placeholder.name]"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入内容"
-            clearable
-          />
-          
-          <!-- 普通文本类型 -->
-          <el-input
-            v-else
-            v-model="formData[placeholder.name]"
-            placeholder="请输入内容"
-            clearable
-          />
-        </el-form-item>
+        <!-- 原告信息 -->
+        <el-collapse v-model="activeGroups" class="form-collapse">
+          <el-collapse-item title="原告信息（自然人）" name="plaintiff">
+            <!-- 性别选择（特殊处理） -->
+            <el-form-item 
+              v-if="hasGenderFields('p_')"
+              class="form-item"
+            >
+              <template #label>
+                <span class="label-text">原告性别</span>
+              </template>
+              <el-radio-group v-model="genderSelections.p" @change="handleGenderChange('p', $event)">
+                <el-radio label="male">男</el-radio>
+                <el-radio label="female">女</el-radio>
+              </el-radio-group>
+            </el-form-item>
+
+            <!-- 其他字段 -->
+            <el-form-item 
+              v-for="placeholder in getGroupPlaceholders('p_', true)"
+              :key="placeholder.id"
+              class="form-item"
+            >
+              <template #label>
+                <span class="label-text">{{ getPlaceholderLabel(placeholder.name) }}</span>
+              </template>
+              
+              <el-select 
+                v-if="isCheckboxField(placeholder.name)"
+                v-model="formData[placeholder.name]"
+                placeholder="请选择"
+                clearable
+              >
+                <el-option label="☑ 选中" value="☑" />
+                <el-option label="□ 未选中" value="□" />
+              </el-select>
+              
+              <el-input
+                v-else-if="isTextareaField(placeholder.name)"
+                v-model="formData[placeholder.name]"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入内容"
+                clearable
+              />
+              
+              <el-input
+                v-else
+                v-model="formData[placeholder.name]"
+                placeholder="请输入内容"
+                clearable
+              />
+            </el-form-item>
+          </el-collapse-item>
+
+          <el-collapse-item title="原告信息（法人）" name="plaintiff_company">
+            <el-form-item 
+              v-for="placeholder in getGroupPlaceholders('pc_')"
+              :key="placeholder.id"
+              class="form-item"
+            >
+              <template #label>
+                <span class="label-text">{{ getPlaceholderLabel(placeholder.name) }}</span>
+              </template>
+              
+              <el-select 
+                v-if="isCheckboxField(placeholder.name)"
+                v-model="formData[placeholder.name]"
+                placeholder="请选择"
+                clearable
+              >
+                <el-option label="☑ 选中" value="☑" />
+                <el-option label="□ 未选中" value="□" />
+              </el-select>
+              
+              <el-input
+                v-else
+                v-model="formData[placeholder.name]"
+                placeholder="请输入内容"
+                clearable
+              />
+            </el-form-item>
+          </el-collapse-item>
+
+          <el-collapse-item title="原告代理人" name="plaintiff_agent">
+            <el-form-item 
+              v-for="placeholder in getGroupPlaceholders('pa_')"
+              :key="placeholder.id"
+              class="form-item"
+            >
+              <template #label>
+                <span class="label-text">{{ getPlaceholderLabel(placeholder.name) }}</span>
+              </template>
+              
+              <el-select 
+                v-if="isCheckboxField(placeholder.name)"
+                v-model="formData[placeholder.name]"
+                placeholder="请选择"
+                clearable
+              >
+                <el-option label="☑ 选中" value="☑" />
+                <el-option label="□ 未选中" value="□" />
+              </el-select>
+              
+              <el-input
+                v-else
+                v-model="formData[placeholder.name]"
+                placeholder="请输入内容"
+                clearable
+              />
+            </el-form-item>
+          </el-collapse-item>
+
+          <el-collapse-item title="被告信息（自然人）" name="defendant">
+            <!-- 性别选择（特殊处理） -->
+            <el-form-item 
+              v-if="hasGenderFields('d_')"
+              class="form-item"
+            >
+              <template #label>
+                <span class="label-text">被告性别</span>
+              </template>
+              <el-radio-group v-model="genderSelections.d" @change="handleGenderChange('d', $event)">
+                <el-radio label="male">男</el-radio>
+                <el-radio label="female">女</el-radio>
+              </el-radio-group>
+            </el-form-item>
+
+            <!-- 其他字段 -->
+            <el-form-item 
+              v-for="placeholder in getGroupPlaceholders('d_', true)"
+              :key="placeholder.id"
+              class="form-item"
+            >
+              <template #label>
+                <span class="label-text">{{ getPlaceholderLabel(placeholder.name) }}</span>
+              </template>
+              
+              <el-select 
+                v-if="isCheckboxField(placeholder.name)"
+                v-model="formData[placeholder.name]"
+                placeholder="请选择"
+                clearable
+              >
+                <el-option label="☑ 选中" value="☑" />
+                <el-option label="□ 未选中" value="□" />
+              </el-select>
+              
+              <el-input
+                v-else-if="isTextareaField(placeholder.name)"
+                v-model="formData[placeholder.name]"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入内容"
+                clearable
+              />
+              
+              <el-input
+                v-else
+                v-model="formData[placeholder.name]"
+                placeholder="请输入内容"
+                clearable
+              />
+            </el-form-item>
+          </el-collapse-item>
+
+          <el-collapse-item title="被告信息（法人）" name="defendant_company">
+            <el-form-item 
+              v-for="placeholder in getGroupPlaceholders('dc_')"
+              :key="placeholder.id"
+              class="form-item"
+            >
+              <template #label>
+                <span class="label-text">{{ getPlaceholderLabel(placeholder.name) }}</span>
+              </template>
+              
+              <el-select 
+                v-if="isCheckboxField(placeholder.name)"
+                v-model="formData[placeholder.name]"
+                placeholder="请选择"
+                clearable
+              >
+                <el-option label="☑ 选中" value="☑" />
+                <el-option label="□ 未选中" value="□" />
+              </el-select>
+              
+              <el-input
+                v-else
+                v-model="formData[placeholder.name]"
+                placeholder="请输入内容"
+                clearable
+              />
+            </el-form-item>
+          </el-collapse-item>
+
+          <el-collapse-item title="第三人信息" name="third_party">
+            <el-form-item 
+              v-for="placeholder in getGroupPlaceholders('t_', 'tc_')"
+              :key="placeholder.id"
+              class="form-item"
+            >
+              <template #label>
+                <span class="label-text">{{ getPlaceholderLabel(placeholder.name) }}</span>
+              </template>
+              
+              <el-select 
+                v-if="isCheckboxField(placeholder.name)"
+                v-model="formData[placeholder.name]"
+                placeholder="请选择"
+                clearable
+              >
+                <el-option label="☑ 选中" value="☑" />
+                <el-option label="□ 未选中" value="□" />
+              </el-select>
+              
+              <el-input
+                v-else
+                v-model="formData[placeholder.name]"
+                placeholder="请输入内容"
+                clearable
+              />
+            </el-form-item>
+          </el-collapse-item>
+
+          <el-collapse-item title="诉讼请求与事实" name="claims">
+            <el-form-item 
+              v-for="placeholder in getOtherPlaceholders()"
+              :key="placeholder.id"
+              class="form-item"
+            >
+              <template #label>
+                <span class="label-text">{{ getPlaceholderLabel(placeholder.name) }}</span>
+              </template>
+              
+              <el-select 
+                v-if="isCheckboxField(placeholder.name)"
+                v-model="formData[placeholder.name]"
+                placeholder="请选择"
+                clearable
+              >
+                <el-option label="☑ 选中" value="☑" />
+                <el-option label="□ 未选中" value="□" />
+              </el-select>
+              
+              <el-input
+                v-else-if="isTextareaField(placeholder.name)"
+                v-model="formData[placeholder.name]"
+                type="textarea"
+                :rows="5"
+                placeholder="请输入内容"
+                clearable
+              />
+              
+              <el-input
+                v-else
+                v-model="formData[placeholder.name]"
+                placeholder="请输入内容"
+                clearable
+              />
+            </el-form-item>
+          </el-collapse-item>
+        </el-collapse>
       </el-form>
-    </el-scrollbar>
-    
-    <div v-if="searchKeyword && filteredPlaceholders.length === 0" class="no-results">
-      <el-empty description="没有找到匹配的占位符" :image-size="80" />
     </div>
   </div>
-
-    <template #footer v-if="placeholders.length > 0">
-      <div class="form-actions">
-        <el-button @click="handleClear">清空</el-button>
-        <el-button type="primary" @click="handleFill">填充到文档</el-button>
-      </div>
-    </template>
-  </el-card>
 </template>
 
 <script>
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
-import placeholderMappingData from '../../PLACEHOLDER_MAPPING.json'
+import placeholderMapping from '@/data/placeholderMapping.json'
+import { 
+  getFieldGroups, 
+  getFieldsForSubgroup, 
+  hasGenderFields as checkGenderFields,
+  isCheckboxField as utilIsCheckboxField,
+  isTextareaField as utilIsTextareaField,
+  detectTemplateType
+} from '@/utils/fieldGroupHelper'
 
-const placeholderMapping = placeholderMappingData
+// 防抖函数
+function debounce(fn, delay) {
+  let timer = null
+  return function(...args) {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      fn.apply(this, args)
+    }, delay)
+  }
+}
 
 export default {
   name: 'PlaceholderList',
@@ -102,12 +325,26 @@ export default {
     activePlaceholderId: {
       type: String,
       default: null
+    },
+    templateConfig: {
+      type: Object,
+      default: null
+    },
+    placeholderMapping: {
+      type: Object,
+      default: null
     }
   },
-  emits: ['fill-placeholders'],
+  emits: ['fill-placeholders', 'preview-update'],
   setup(props, { emit }) {
     const formData = ref({})
     const searchKeyword = ref('')
+    const activeGroups = ref(['plaintiff', 'defendant', 'claims']) // 默认展开的分组
+    const genderSelections = ref({
+      p: null,  // 原告性别
+      d: null,  // 被告性别
+      t: null   // 第三人性别
+    })
 
     // 监听占位符变化，初始化表单数据
     watch(() => props.placeholders, (newPlaceholders) => {
@@ -118,21 +355,62 @@ export default {
       formData.value = newFormData
     }, { immediate: true, deep: true })
 
-    // 过滤占位符
-    const filteredPlaceholders = computed(() => {
-      if (!searchKeyword.value) {
-        return props.placeholders
+    // 防抖的预览更新函数
+    const debouncedPreviewUpdate = debounce((data) => {
+      console.log('触发预览更新')
+      emit('preview-update', data)
+    }, 500) // 500ms 防抖
+
+    // 监听表单数据变化，实时更新预览
+    watch(formData, (newData) => {
+      debouncedPreviewUpdate(newData)
+    }, { deep: true })
+
+    // 检查是否有性别字段
+    const hasGenderFields = (prefix) => {
+      return props.placeholders.some(p => 
+        p.name === `${prefix}gender_m` || p.name === `${prefix}gender_f`
+      )
+    }
+
+    // 处理性别选择变化
+    const handleGenderChange = (prefix, value) => {
+      if (value === 'male') {
+        formData.value[`${prefix}_gender_m`] = '☑'
+        formData.value[`${prefix}_gender_f`] = '□'
+      } else if (value === 'female') {
+        formData.value[`${prefix}_gender_m`] = '□'
+        formData.value[`${prefix}_gender_f`] = '☑'
       }
-      const keyword = searchKeyword.value.toLowerCase()
+    }
+
+    // 获取指定前缀的占位符
+    const getGroupPlaceholders = (prefix, excludeGender = false) => {
       return props.placeholders.filter(p => {
-        const label = getPlaceholderLabel(p.name).toLowerCase()
-        const name = p.name.toLowerCase()
-        return label.includes(keyword) || name.includes(keyword)
+        const isMatch = p.name.startsWith(prefix) && !p.name.startsWith('pa_')
+        if (excludeGender) {
+          // 排除性别字段
+          return isMatch && !p.name.includes('gender_m') && !p.name.includes('gender_f')
+        }
+        return isMatch
       })
-    })
+    }
+
+    // 获取其他占位符（不属于特定分组的）
+    const getOtherPlaceholders = () => {
+      const knownPrefixes = ['p_', 'pc_', 'pa_', 'd_', 'dc_', 't_', 'tc_']
+      return props.placeholders.filter(p => {
+        return !knownPrefixes.some(prefix => p.name.startsWith(prefix))
+      })
+    }
 
     // 获取占位符的中文标签
     const getPlaceholderLabel = (name) => {
+      // 优先使用传入的 placeholderMapping
+      if (props.placeholderMapping && props.placeholderMapping[name]) {
+        return props.placeholderMapping[name]
+      }
+      // 降级使用导入的 placeholderMapping
       return placeholderMapping[name] || name
     }
 
@@ -229,7 +507,12 @@ export default {
     return {
       formData,
       searchKeyword,
-      filteredPlaceholders,
+      activeGroups,
+      genderSelections,
+      hasGenderFields,
+      handleGenderChange,
+      getGroupPlaceholders,
+      getOtherPlaceholders,
       getPlaceholderLabel,
       isCheckboxField,
       isTextareaField,
@@ -243,62 +526,68 @@ export default {
 
 <style scoped>
 .placeholder-list {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+  padding: 24px;
 }
 
 .list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-weight: 600;
-  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.list-header h3 {
+  margin: 0;
+  font-size: 20px;
+  color: #303133;
+}
+
+.search-bar {
+  margin-bottom: 20px;
 }
 
 .placeholder-form {
-  padding: 16px;
+  padding: 0;
+}
+
+.form-collapse {
+  border: none;
+}
+
+.form-collapse :deep(.el-collapse-item__header) {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  background: #f5f7fa;
+  padding: 16px 20px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.form-collapse :deep(.el-collapse-item__wrap) {
+  border: none;
+  background: transparent;
+}
+
+.form-collapse :deep(.el-collapse-item__content) {
+  padding: 16px 20px 24px;
+  background: #fafafa;
+  border-radius: 4px;
+  margin-bottom: 16px;
 }
 
 .form-item {
   margin-bottom: 20px;
 }
 
-.form-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
 .label-text {
   font-weight: 500;
-  color: #303133;
+  color: #606266;
   font-size: 14px;
 }
 
 .form-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
-}
-
-.search-bar {
-  padding: 16px;
-  border-bottom: 1px solid #ebeef5;
-  background: #fafafa;
-}
-
-.no-results {
-  padding: 40px 16px;
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px;
-  border-top: 1px solid #ebeef5;
-  background: #fafafa;
 }
 </style>

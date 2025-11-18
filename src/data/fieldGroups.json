@@ -1,0 +1,137 @@
+{
+  "lawsuit_template": {
+    "name": "民事起诉状模板",
+    "groups": [
+      {
+        "id": "party_info",
+        "title": "当事人信息",
+        "icon": "User",
+        "defaultExpanded": true,
+        "subgroups": [
+          {
+            "id": "plaintiff_person",
+            "title": "原告（自然人）",
+            "prefix": "p_",
+            "excludePrefixes": ["pc_", "pa_"],
+            "fields": [
+              "p_name",
+              "p_gender_m",
+              "p_gender_f",
+              "p_birth_y",
+              "p_birth_m",
+              "p_birth_d",
+              "p_ethnic",
+              "p_company",
+              "p_position",
+              "p_phone",
+              "p_reg_addr",
+              "p_res_addr",
+              "p_id_type",
+              "p_id_num"
+            ]
+          },
+          {
+            "id": "plaintiff_company",
+            "title": "原告（法人、非法人组织）",
+            "prefix": "pc_",
+            "fields": []
+          },
+          {
+            "id": "plaintiff_agent",
+            "title": "委托诉讼代理人",
+            "prefix": "pa_",
+            "fields": []
+          },
+          {
+            "id": "defendant_person",
+            "title": "被告（自然人）",
+            "prefix": "d_",
+            "excludePrefixes": ["dc_"],
+            "fields": []
+          },
+          {
+            "id": "defendant_company",
+            "title": "被告（法人、非法人组织）",
+            "prefix": "dc_",
+            "fields": []
+          },
+          {
+            "id": "third_party_person",
+            "title": "第三人（自然人）",
+            "prefix": "t_",
+            "excludePrefixes": ["tc_"],
+            "fields": []
+          },
+          {
+            "id": "third_party_company",
+            "title": "第三人（法人、非法人组织）",
+            "prefix": "tc_",
+            "fields": []
+          }
+        ]
+      },
+      {
+        "id": "claims",
+        "title": "诉讼请求与事实",
+        "icon": "Document",
+        "defaultExpanded": true,
+        "subgroups": [
+          {
+            "id": "claim_content",
+            "title": "诉讼请求",
+            "fields": ["claim_content", "total_amount", "litigation_cost_yes", "litigation_cost_no", "other_request"]
+          },
+          {
+            "id": "contract_issues",
+            "title": "确定合同关系",
+            "prefixPattern": "contract_",
+            "fields": []
+          },
+          {
+            "id": "payment_issues",
+            "title": "支付返还购房款",
+            "prefixPattern": "payment_",
+            "fields": []
+          },
+          {
+            "id": "delivery_issues",
+            "title": "交付返还房屋",
+            "prefixPattern": "delivery_|return_|delay_",
+            "fields": []
+          },
+          {
+            "id": "registration_issues",
+            "title": "办理房屋登记",
+            "prefixPattern": "registration_",
+            "fields": []
+          },
+          {
+            "id": "facts",
+            "title": "事实与理由",
+            "fields": ["facts_and_reasons", "contract_date", "evidence_list"]
+          }
+        ]
+      },
+      {
+        "id": "other_info",
+        "title": "其他信息",
+        "icon": "More",
+        "defaultExpanded": false,
+        "subgroups": [
+          {
+            "id": "jurisdiction",
+            "title": "管辖与保全",
+            "prefixPattern": "jurisdiction_|preservation_",
+            "fields": []
+          },
+          {
+            "id": "mediation",
+            "title": "调解意愿",
+            "prefixPattern": "mediation_|consider_",
+            "fields": []
+          }
+        ]
+      }
+    ]
+  }
+}

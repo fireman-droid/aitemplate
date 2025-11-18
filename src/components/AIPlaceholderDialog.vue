@@ -25,6 +25,42 @@
         </el-upload>
       </el-form-item>
 
+      <el-form-item label="AI 提供商" required>
+        <el-select v-model="formData.provider" placeholder="请选择AI提供商" @change="handleProviderChange">
+          <el-option label="DeepSeek - 推荐" value="deepseek" />
+          <el-option label="Kimi (月之暗面)" value="kimi" />
+          <el-option label="Gemini (Google) - 需要代理" value="gemini" />
+        </el-select>
+      </el-form-item>
+      
+      <el-alert
+        v-if="formData.provider === 'gemini'"
+        type="warning"
+        :closable="false"
+        show-icon
+        style="margin-bottom: 16px;"
+      >
+        <template #title>
+          Gemini API在中国大陆可能无法直接访问，需要使用代理或VPN
+        </template>
+      </el-alert>
+
+      <el-form-item label="API Key" required>
+        <el-input
+          v-model="formData.apiKey"
+          type="password"
+          show-password
+          placeholder="请输入API密钥"
+        />
+      </el-form-item>
+
+      <el-form-item label="模型">
+        <el-input
+          v-model="formData.model"
+          placeholder="留空使用默认模型"
+        />
+      </el-form-item>
+
       <el-form-item label="文档类型">
         <el-input
           v-model="formData.documentType"
@@ -93,10 +129,10 @@ export default {
   emits: ['confirm', 'cancel'],
   setup(props, { emit }) {
     const formData = ref({
-      provider: 'kimi',
-      apiKey: 'sk-Y1Aby7GAeIqfxU7MbwBWRno8F6oHfDmy02hREFSKDM5rTiCO',
+      provider: 'deepseek',
+      apiKey: 'sk-94498aa676b64586ab39474fefbba9bb',
       apiUrl: '',
-      model: 'moonshot-v1-8k',
+      model: '',
       documentType: ''
     })
     const isGenerating = ref(false)
@@ -184,6 +220,23 @@ export default {
       emit('confirm', aiData)
     }
 
+    const handleProviderChange = (provider) => {
+      // 切换提供商时更新默认配置
+      if (provider === 'deepseek') {
+        formData.value.apiKey = 'sk-94498aa676b64586ab39474fefbba9bb'
+        formData.value.model = 'deepseek-chat'
+        formData.value.apiUrl = ''
+      } else if (provider === 'kimi') {
+        formData.value.apiKey = 'sk-Y1Aby7GAeIqfxU7MbwBWRno8F6oHfDmy02hREFSKDM5rTiCO'
+        formData.value.model = 'moonshot-v1-8k'
+        formData.value.apiUrl = ''
+      } else if (provider === 'gemini') {
+        formData.value.apiKey = 'AIzaSyDjDiBhXDcoIgllDcb5vUb80wuRajea2B8'
+        formData.value.model = 'gemini-pro'
+        formData.value.apiUrl = ''
+      }
+    }
+
     const handleClose = () => {
       isGenerating.value = false
       emit('cancel')
@@ -198,6 +251,7 @@ export default {
       uploadRef,
       InfoFilled,
       Upload,
+      handleProviderChange,
       handleFileChange,
       handleFileRemove,
       handleGenerate,

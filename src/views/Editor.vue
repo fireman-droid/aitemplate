@@ -1,41 +1,44 @@
 <template>
   <div class="editor">
-    <div v-if="!templateStore.currentTemplate" class="upload-section">
-      <h2>上传模板文件</h2>
+    <!-- 模板选择界面 -->
+    <div v-if="!templateStore.currentTemplate && !showCustomUpload" class="selection-section">
+      <TemplateSelector 
+        @template-selected="handleTemplateSelected"
+        @upload-custom="showCustomUpload = true"
+      />
+    </div>
+
+    <!-- 自定义上传界面 -->
+    <div v-else-if="!templateStore.currentTemplate && showCustomUpload" class="upload-section">
+      <el-button 
+        text 
+        @click="showCustomUpload = false" 
+        class="back-button"
+        :icon="ArrowLeft"
+      >
+        返回模板选择
+      </el-button>
+      <h2>上传自定义模板</h2>
       <FileUploader 
         @file-selected="handleFileSelected"
         @error="handleError"
       />
-      <!-- 调试信息 -->
-      <div style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 4px; font-size: 12px;">
-        <p><strong>调试信息:</strong></p>
-        <p>currentTemplate: {{ templateStore.currentTemplate ? '已设置 ✓' : '未设置 ✗' }}</p>
-        <p>isLoading: {{ templateStore.isLoading ? '加载中...' : '空闲' }}</p>
-        <p>error: {{ templateStore.error || '无' }}</p>
-        <el-button size="small" @click="testStore" style="margin-top: 10px;">测试 Store</el-button>
-      </div>
     </div>
 
     <div v-else class="editor-workspace">
-      <PlaceholderToolbar 
-        :can-add-placeholder="false"
-        :can-undo="false"
-        :can-redo="false"
-        @ai-generate="showAIDialog"
-        @download="downloadFile"
-      />
+      <!-- 顶部工具栏 -->
+      <div class="top-toolbar">
+        <h2>{{ templateStore.currentTemplate.name }}</h2>
+        <div class="toolbar-actions">
+          <el-button type="success" @click="showAIDialog" :icon="MagicStick">AI 智能提取</el-button>
+          <el-button @click="showPreviewDrawer = true" :icon="View">预览模板</el-button>
+          <el-button type="primary" @click="downloadFile" :icon="Download">生成文档</el-button>
+        </div>
+      </div>
 
       <div class="workspace-content">
-        <div class="preview-section">
-          <TemplatePreview 
-            :content="templateStore.currentTemplate.content"
-            :content-type="templateStore.currentTemplate.contentType"
-            :placeholders="placeholderStore.placeholders"
-            :active-placeholder-id="placeholderStore.activePlaceholderId"
-          />
-        </div>
-
-        <div class="sidebar">
+        <!-- 主要区域：填写表单 -->
+        <div class="form-section">
           <!-- AI 返回数据显示卡片 -->
           <el-card v-if="aiResultData" class="ai-result-card" shadow="hover">
             <template #header>
@@ -53,15 +56,43 @@
             </template>
           </el-card>
 
+          <!-- 如果有模板配置，使用动态表单；否则使用原来的表单 -->
+          <DynamicPlaceholderForm
+            v-if="currentTemplateConfig"
+            ref="placeholderListRef"
+            :placeholders="placeholderStore.placeholders"
+            :template-config="currentTemplateConfig"
+            :placeholder-mapping="currentPlaceholderMapping"
+            @preview-update="handlePreviewUpdate"
+          />
           <PlaceholderList 
+            v-else
             ref="placeholderListRef"
             :placeholders="placeholderStore.placeholders"
             :active-placeholder-id="placeholderStore.activePlaceholderId"
+            :template-config="currentTemplateConfig"
+            :placeholder-mapping="currentPlaceholderMapping"
             @fill-placeholders="handleFillPlaceholders"
+            @preview-update="handlePreviewUpdate"
           />
         </div>
       </div>
     </div>
+
+    <!-- 预览抽屉 -->
+    <el-drawer
+      v-model="showPreviewDrawer"
+      title="模板预览"
+      direction="rtl"
+      size="60%"
+    >
+      <TemplatePreview 
+        :content="templateStore.currentTemplate.content"
+        :content-type="templateStore.currentTemplate.contentType"
+        :placeholders="placeholderStore.placeholders"
+        :active-placeholder-id="placeholderStore.activePlaceholderId"
+      />
+    </el-drawer>
 
     <!-- AI 对话框 -->
     <AIPlaceholderDialog 
@@ -77,13 +108,17 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { View, Download, MagicStick, Close, ArrowLeft } from '@element-plus/icons-vue'
 import { useTemplateStore } from '@/stores/template'
 import { usePlaceholderStore } from '@/stores/placeholder'
 import { StorageService } from '@/services/storageService'
+import { TemplateService } from '@/services/templateService'
+import TemplateSelector from '@/components/TemplateSelector.vue'
 import FileUploader from '@/components/FileUploader.vue'
 import TemplatePreview from '@/components/TemplatePreview.vue'
 import PlaceholderToolbar from '@/components/PlaceholderToolbar.vue'
 import PlaceholderList from '@/components/PlaceholderList.vue'
+import DynamicPlaceholderForm from '@/components/DynamicPlaceholderForm.vue'
 import PlaceholderDialog from '@/components/PlaceholderDialog.vue'
 import AIPlaceholderDialog from '@/components/AIPlaceholderDialog.vue'
 import { AIService } from '@/services/aiService'
@@ -94,10 +129,12 @@ import { saveAs } from 'file-saver'
 export default {
   name: 'Editor',
   components: {
+    TemplateSelector,
     FileUploader,
     TemplatePreview,
     PlaceholderToolbar,
     PlaceholderList,
+    DynamicPlaceholderForm,
     PlaceholderDialog,
     AIPlaceholderDialog
   },
@@ -115,16 +152,53 @@ export default {
     const currentProjectId = ref(null)
     const aiResultData = ref(null)
     const placeholderListRef = ref(null)
+    const showPreviewDrawer = ref(false)
+    const showCustomUpload = ref(false)
+    const currentTemplateConfig = ref(null)
+    const currentPlaceholderMapping = ref(null)
+    const originalTemplateContent = ref('') // 保存原始模板内容
+
+    // 处理模板选择
+    const handleTemplateSelected = async (completeTemplate) => {
+      console.log('=== 选择模板 ===', completeTemplate)
+      
+      try {
+        // 保存模板配置和映射
+        currentTemplateConfig.value = completeTemplate.config
+        currentPlaceholderMapping.value = completeTemplate.placeholderMapping
+        
+        // 上传模板文件
+        await templateStore.uploadTemplate(completeTemplate.file)
+        
+        // 保存原始模板内容
+        originalTemplateContent.value = templateStore.currentTemplate.content
+        
+        // 提取占位符
+        extractPlaceholders()
+        
+        ElMessage.success(`模板"${completeTemplate.config.lawsuit_template?.name || '未命名'}"加载成功`)
+      } catch (error) {
+        console.error('加载模板失败:', error)
+        ElMessage.error('加载模板失败: ' + error.message)
+      }
+    }
 
     const handleFileSelected = async (file) => {
-      console.log('=== 开始上传文件 ===')
+      console.log('=== 开始上传自定义文件 ===')
       console.log('文件名:', file.name)
       console.log('文件类型:', file.type)
       console.log('文件大小:', file.size)
       
       try {
+        // 清空模板配置（自定义上传不使用配置）
+        currentTemplateConfig.value = null
+        currentPlaceholderMapping.value = null
+        
         await templateStore.uploadTemplate(file)
         console.log('上传成功，currentTemplate:', templateStore.currentTemplate)
+        
+        // 保存原始模板内容
+        originalTemplateContent.value = templateStore.currentTemplate.content
         
         // 自动提取占位符
         extractPlaceholders()
@@ -169,7 +243,7 @@ export default {
       ElMessage.success(`已提取 ${placeholderNames.size} 个占位符`)
     }
 
-    // 处理填充占位符
+    // 处理填充占位符（点击"填充到文档"按钮时调用）
     const handleFillPlaceholders = (formData) => {
       if (!templateStore.currentTemplate) return
 
@@ -204,6 +278,30 @@ export default {
       console.log('触发视图更新')
 
       ElMessage.success(`占位符已填充到文档（${replacedCount}处）`)
+    }
+
+    // 处理预览更新（实时预览，带防抖）
+    const handlePreviewUpdate = (formData) => {
+      if (!templateStore.currentTemplate) return
+      if (!originalTemplateContent.value) return
+
+      // 从保存的原始模板内容开始，重新应用所有填充
+      let content = originalTemplateContent.value
+
+      // 替换所有占位符
+      Object.entries(formData).forEach(([key, value]) => {
+        const regex = new RegExp(`\\{${key}\\}`, 'g')
+        if (value && value !== '' && value !== '□') {
+          // 有值且不是未选中的复选框：替换为实际值
+          content = content.replace(regex, value)
+        } else {
+          // 无值或未选中：替换为空字符串
+          content = content.replace(regex, '')
+        }
+      })
+
+      // 更新预览内容
+      templateStore.updateTemplate({ content: content })
     }
 
     const handleError = (error) => {
@@ -581,6 +679,16 @@ export default {
       documentContent,
       aiResultData,
       placeholderListRef,
+      showPreviewDrawer,
+      showCustomUpload,
+      currentTemplateConfig,
+      currentPlaceholderMapping,
+      View,
+      Download,
+      MagicStick,
+      Close,
+      ArrowLeft,
+      handleTemplateSelected,
       handleFileSelected,
       handleError,
       testStore,
@@ -597,7 +705,8 @@ export default {
       deletePlaceholder,
       closeDialog,
       downloadFile,
-      handleFillPlaceholders
+      handleFillPlaceholders,
+      handlePreviewUpdate
     }
   }
 }
@@ -605,13 +714,25 @@ export default {
 
 <style scoped>
 .editor {
-  min-height: calc(100vh - 200px);
+  min-height: 100vh;
+}
+
+.selection-section {
+  min-height: calc(100vh - 60px);
 }
 
 .upload-section {
   max-width: 700px;
   margin: 0 auto;
   padding: 3rem 0;
+  position: relative;
+}
+
+.back-button {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin-bottom: 1rem;
 }
 
 .upload-section h2 {
@@ -624,31 +745,56 @@ export default {
 .editor-workspace {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  min-height: 100vh;
+}
+
+.top-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid #ebeef5;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.top-toolbar h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #303133;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 12px;
 }
 
 .workspace-content {
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 16px;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  background: #f5f7fa;
+  padding: 24px;
 }
 
-.preview-section {
-  min-height: 500px;
-}
-
-.sidebar {
-  position: sticky;
-  top: 24px;
-  height: fit-content;
-  max-height: calc(100vh - 120px);
+.form-section {
+  width: 100%;
+  max-width: 1200px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  margin-bottom: 24px;
 }
 
+
+
 .ai-result-card {
-  margin-bottom: 16px;
+  margin: 16px;
 }
 
 .card-header {
@@ -670,13 +816,22 @@ export default {
 }
 
 @media (max-width: 1024px) {
-  .workspace-content {
-    grid-template-columns: 1fr;
+  .form-section {
+    max-width: 100%;
   }
-
-  .sidebar {
-    position: static;
-    max-height: none;
+  
+  .top-toolbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .toolbar-actions {
+    width: 100%;
+  }
+  
+  .toolbar-actions button {
+    flex: 1;
   }
 }
 </style>

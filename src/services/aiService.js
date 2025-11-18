@@ -99,8 +99,14 @@ ${contentText}
         'Authorization': `Bearer ${apiKey}`
       }
 
-      if (provider === 'kimi') {
+      if (provider === 'deepseek') {
+        url = 'https://api.deepseek.com/v1/chat/completions'
+      } else if (provider === 'kimi') {
         url = 'https://api.moonshot.cn/v1/chat/completions'
+      } else if (provider === 'gemini') {
+        const geminiModel = selectedModel || model || 'gemini-pro'
+        url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey}`
+        delete headers['Authorization'] // Gemini使用URL参数传递API Key
       } else if (provider === 'openrouter') {
         url = 'https://openrouter.ai/api/v1/chat/completions'
         headers['HTTP-Referer'] = window.location.origin
@@ -113,8 +119,12 @@ ${contentText}
 
       let selectedModel = model
       if (!selectedModel || selectedModel.trim() === '') {
-        if (provider === 'kimi') {
+        if (provider === 'deepseek') {
+          selectedModel = 'deepseek-chat'
+        } else if (provider === 'kimi') {
           selectedModel = 'moonshot-v1-8k'
+        } else if (provider === 'gemini') {
+          selectedModel = 'gemini-pro'
         } else if (provider === 'openrouter') {
           selectedModel = 'deepseek/deepseek-r1:free'
         } else {
@@ -122,33 +132,66 @@ ${contentText}
         }
       }
 
-      const requestBody = {
-        model: selectedModel,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.3,
-        max_tokens: 2000
+      let requestBody
+      let content
+
+      if (provider === 'gemini') {
+        // Gemini API格式
+        requestBody = {
+          contents: [{
+            parts: [{
+              text: `${systemPrompt}\n\n${userPrompt}`
+            }]
+          }],
+          generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 2000
+          }
+        }
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(requestBody)
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error?.message || '调用Gemini接口失败')
+        }
+
+        const data = await response.json()
+        content = data.candidates[0].content.parts[0].text
+      } else {
+        // OpenAI兼容格式 (Kimi, OpenAI, OpenRouter等)
+        requestBody = {
+          model: selectedModel,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 2000
+        }
+
+        if (provider === 'openai' || provider === 'kimi' || provider === 'deepseek') {
+          requestBody.response_format = { type: 'json_object' }
+        }
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(requestBody)
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.error?.message || '调用AI接口失败')
+        }
+
+        const data = await response.json()
+        content = data.choices[0].message.content
       }
-
-      if (provider === 'openai' || provider === 'kimi') {
-        requestBody.response_format = { type: 'json_object' }
-      }
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(requestBody)
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error?.message || '调用AI接口失败')
-      }
-
-      const data = await response.json()
-      let content = data.choices[0].message.content
 
       // 解析 JSON 响应
       let extractedData
@@ -252,6 +295,15 @@ ${contentText}
       return extractedData
     } catch (error) {
       console.error('AI提取数据失败:', error)
+      
+      // 提供更友好的错误信息
+      if (error.message.includes('Failed to fetch') || error.message.includes('ERR_CONNECTION_CLOSED')) {
+        if (provider === 'gemini') {
+          throw new Error('无法连接到Gemini API，可能是网络问题或需要代理。请检查网络连接或尝试使用Kimi。')
+        }
+        throw new Error('网络连接失败，请检查网络连接后重试')
+      }
+      
       throw error
     }
   }

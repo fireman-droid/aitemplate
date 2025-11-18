@@ -1,0 +1,13 @@
+{
+  "templates": [
+    {
+      "id": "house-sale-dispute",
+      "name": "房屋买卖合同纠纷",
+      "description": "适用于房屋买卖合同相关的民事纠纷案件",
+      "icon": "House",
+      "category": "合同纠纷",
+      "path": "/src/templates/house-sale-dispute",
+      "enabled": true
+    }
+  ]
+}
