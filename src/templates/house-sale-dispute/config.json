@@ -1,293 +1,452 @@
 {
-  "lawsuit_template": {
-    "name": "民事起诉状模板（房屋买卖合同纠纷）",
-    "groups": [
+  "template_config": {
+    "template_name": "房屋买卖合同纠纷民事起诉状",
+    "root_sections": [
       {
-        "id": "party_info",
+        "id": "section_parties",
         "title": "一、当事人信息",
-        "icon": "User",
-        "defaultExpanded": true,
-        "subgroups": [
+        "description": "填写原告、被告及第三人的基本身份信息",
+        "groups": [
           {
-            "id": "plaintiff_info",
-            "title": "1.1 原告信息",
-            "type": "section",
-            "subgroups": [
-              {
-                "id": "plaintiff_person",
-                "title": "□ 原告为自然人",
-                "description": "包含：姓名、性别、出生日期、民族、工作单位、职务、联系电话、住所地、经常居住地、证件类型、证件号码等字段",
-                "prefix": "p_",
-                "excludePrefixes": ["pc_", "pa_"]
-              },
-              {
-                "id": "plaintiff_company",
-                "title": "□ 原告为法人/非法人组织",
-                "description": "包含：名称、住所地、注册地、法定代表人、联系电话、统一社会信用代码、类型、所有制性质等字段",
-                "prefix": "pc_"
+            "id": "group_plaintiff",
+            "title": "1. 原告信息",
+            "ui_mode": "dynamic_list",
+            "allow_add": true,
+            "fields_mapping": {
+              "type_selector": {
+                "label": "主体类型",
+                "options": [
+                  {
+                    "label": "自然人",
+                    "value": "natural",
+                    "fields": [
+                      "p_name", "p_gender_m", "p_gender_f", "p_birth_y", "p_birth_m", "p_birth_d", 
+                      "p_ethnic", "p_company", "p_position", "p_phone", "p_reg_addr", "p_res_addr", 
+                      "p_id_type", "p_id_num"
+                    ]
+                  },
+                  {
+                    "label": "法人/非法人组织",
+                    "value": "legal",
+                    "fields": [
+                      "pc_name", "pc_addr", "pc_reg_addr", "pc_legal_rep", "pc_position", "pc_phone", "pc_credit_code"
+                    ],
+                    "sub_groups": [
+                      {
+                        "label": "单位类型 (单选)",
+                        "ui_mode": "radio_group_boolean",
+                        "fields": [
+                          "pc_type_llc", "pc_type_jsc", "pc_type_listed", "pc_type_other_ent", 
+                          "pc_type_inst", "pc_type_org", "pc_type_fund", "pc_type_service", 
+                          "pc_type_gov", "pc_type_rural", "pc_type_coop", "pc_type_community", 
+                          "pc_type_sole", "pc_type_partner", "pc_type_prof"
+                        ]
+                      },
+                      {
+                        "label": "所有制性质 (单选)",
+                        "ui_mode": "radio_group_boolean",
+                        "fields": [
+                          "pc_own_state", "pc_own_state_ctrl", "pc_own_state_share", "pc_own_private", "pc_own_other"
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
+            }
+          },
+          {
+            "id": "group_agent",
+            "title": "2. 委托诉讼代理人",
+            "ui_mode": "conditional_section",
+            "trigger_field_true": "pa_has",
+            "trigger_field_false": "pa_none",
+            "fields": [
+              "pa_name", "pa_company", "pa_position", "pa_phone", 
+              "pa_auth_general", "pa_auth_special"
             ]
           },
           {
-            "id": "plaintiff_agent",
-            "title": "1.2 委托诉讼代理人信息",
-            "description": "如有代理人，则填写：姓名、单位、职务、联系电话、代理权限等字段",
-            "prefix": "pa_"
+            "id": "group_defendant",
+            "title": "3. 被告信息",
+            "ui_mode": "dynamic_list",
+            "allow_add": true,
+            "fields_mapping": {
+              "type_selector": {
+                "label": "主体类型",
+                "options": [
+                  {
+                    "label": "自然人",
+                    "value": "natural",
+                    "fields": [
+                      "d_name", "d_gender_m", "d_gender_f", "d_birth_y", "d_birth_m", "d_birth_d", 
+                      "d_ethnic", "d_company", "d_position", "d_phone", "d_reg_addr", "d_res_addr", 
+                      "d_id_type", "d_id_num"
+                    ]
+                  },
+                  {
+                    "label": "法人/非法人组织",
+                    "value": "legal",
+                    "fields": [
+                      "dc_name", "dc_addr", "dc_reg_addr", "dc_legal_rep", "dc_position", "dc_phone", "dc_credit_code"
+                    ],
+                    "sub_groups": [
+                      {
+                        "label": "单位类型 (单选)",
+                        "ui_mode": "radio_group_boolean",
+                        "fields": [
+                          "dc_type_llc", "dc_type_jsc", "dc_type_listed", "dc_type_other_ent", 
+                          "dc_type_inst", "dc_type_org", "dc_type_fund", "dc_type_service", 
+                          "dc_type_gov", "dc_type_rural", "dc_type_coop", "dc_type_community", 
+                          "dc_type_sole", "dc_type_partner", "dc_type_prof"
+                        ]
+                      },
+                      {
+                        "label": "所有制性质 (单选)",
+                        "ui_mode": "radio_group_boolean",
+                        "fields": [
+                          "dc_own_state", "dc_own_state_ctrl", "dc_own_state_share", "dc_own_private", "dc_own_other"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
           },
           {
-            "id": "defendant_info",
-            "title": "1.3 被告信息",
-            "type": "section",
-            "subgroups": [
-              {
-                "id": "defendant_person",
-                "title": "□ 被告为自然人",
-                "description": "字段同原告为自然人",
-                "prefix": "d_",
-                "excludePrefixes": ["dc_"]
-              },
-              {
-                "id": "defendant_company",
-                "title": "□ 被告为法人/非法人组织",
-                "description": "字段同原告为法人/非法人组织",
-                "prefix": "dc_"
+            "id": "group_third_party",
+            "title": "4. 第三人信息",
+            "ui_mode": "dynamic_list",
+            "allow_add": true,
+            "fields_mapping": {
+              "type_selector": {
+                "label": "主体类型",
+                "options": [
+                  {
+                    "label": "自然人",
+                    "value": "natural",
+                    "fields": [
+                      "t_name", "t_gender_m", "t_gender_f", "t_birth_y", "t_birth_m", "t_birth_d", 
+                      "t_ethnic", "t_company", "t_position", "t_phone", "t_reg_addr", "t_res_addr", 
+                      "t_id_type", "t_id_num"
+                    ]
+                  },
+                  {
+                    "label": "法人/非法人组织",
+                    "value": "legal",
+                    "fields": [
+                      "tc_name", "tc_addr", "tc_reg_addr", "tc_legal_rep", "tc_position", "tc_phone", "tc_credit_code"
+                    ],
+                    "sub_groups": [
+                      {
+                        "label": "单位类型 (单选)",
+                        "ui_mode": "radio_group_boolean",
+                        "fields": [
+                          "tc_type_llc", "tc_type_jsc", "tc_type_listed", "tc_type_other_ent", 
+                          "tc_type_inst", "tc_type_org", "tc_type_fund", "tc_type_service", 
+                          "tc_type_gov", "tc_type_rural", "tc_type_coop", "tc_type_community", 
+                          "tc_type_sole", "tc_type_partner", "tc_type_prof"
+                        ]
+                      },
+                      {
+                        "label": "所有制性质 (单选)",
+                        "ui_mode": "radio_group_boolean",
+                        "fields": [
+                          "tc_own_state", "tc_own_state_ctrl", "tc_own_state_share", "tc_own_private", "tc_own_other"
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
-            ]
-          },
-          {
-            "id": "third_party_info",
-            "title": "1.4 第三人信息",
-            "description": "如有第三人，则填写以下子项",
-            "type": "section",
-            "subgroups": [
-              {
-                "id": "third_party_person",
-                "title": "□ 第三人为自然人",
-                "description": "字段同原告为自然人",
-                "prefix": "t_",
-                "excludePrefixes": ["tc_"]
-              },
-              {
-                "id": "third_party_company",
-                "title": "□ 第三人为法人/非法人组织",
-                "description": "字段同原告为法人/非法人组织",
-                "prefix": "tc_"
-              }
-            ]
+            }
           }
         ]
       },
       {
-        "id": "claims",
+        "id": "section_claims",
         "title": "二、诉讼请求",
-        "icon": "Document",
-        "defaultExpanded": true,
-        "subgroups": [
+        "description": "请填写诉讼请求详情",
+        "groups": [
           {
-            "id": "total_amount",
-            "title": "2.1 标的总额",
-            "description": "填写本次诉讼的总金额",
-            "fields": ["total_amount"]
+            "id": "claim_summary",
+            "title": "诉讼请求总述",
+            "description": "请在此处概括您的核心诉求（对应文档开头的 {claim_content}）",
+            "ui_mode": "textarea_full_width",
+            "fields": ["claim_content"] 
           },
           {
-            "id": "specific_requests",
-            "title": "2.2 各项具体请求",
-            "type": "section",
-            "subgroups": [
-              {
-                "id": "contract_request",
-                "title": "请求一：关于房屋买卖合同关系",
-                "description": "确认合同无效/未成立/解除/撤销/继续履行等",
-                "prefixPattern": "contract_"
-              },
-              {
-                "id": "payment_request",
-                "title": "请求二：关于支付或返还购房款",
-                "description": "返还首付款/定金/已付款，或主张支付欠付房款/违约金/利息等",
-                "prefixPattern": "payment_"
-              },
-              {
-                "id": "delivery_request",
-                "title": "请求三：关于交付或返还房屋",
-                "description": "主张交付房屋、返还房屋、支付逾期交房违约金",
-                "prefixPattern": "delivery_|return_|delay_"
-              },
-              {
-                "id": "registration_request",
-                "title": "请求四：关于办理房屋登记手续",
-                "description": "主张协助办证、支付逾期办证违约金",
-                "prefixPattern": "registration_"
-              },
-              {
-                "id": "agency_fee_request",
-                "title": "请求五：关于返还或承担中介服务费",
-                "description": "主张返还或由被告承担，并填写金额明细",
-                "prefixPattern": "agency_fee_"
-              },
-              {
-                "id": "quality_request",
-                "title": "请求六：关于房屋质量损害赔偿",
-                "description": "主张维修、承担维修费，并填写金额明细",
-                "prefixPattern": "quality_"
-              },
-              {
-                "id": "mortgage_request",
-                "title": "请求七：关于解除担保贷款（按揭）合同",
-                "description": "填写具体要求",
-                "prefixPattern": "mortgage_"
-              },
-              {
-                "id": "appraisal_request",
-                "title": "请求八：关于鉴定及其他实现债权的费用",
-                "description": "请求委托鉴定，并填写费用明细",
-                "prefixPattern": "appraisal_"
-              },
-              {
-                "id": "litigation_cost",
-                "title": "请求九：关于诉讼费用承担",
-                "fields": ["litigation_cost_yes", "litigation_cost_no"]
-              },
-              {
-                "id": "other_request",
-                "title": "请求十：其他请求",
-                "description": "填写未在上述列明的其他诉讼请求",
-                "fields": ["other_request"]
-              }
+            "id": "claim_1_contract",
+            "title": "1. 房屋买卖合同关系",
+            "ui_mode": "checkbox_activation",
+            "trigger_field_true": "contract_has_issue",
+            "trigger_field_false": "contract_no_issue",
+            "detail_fields": [
+              "contract_claim_invalid", "contract_claim_not_formed", "contract_claim_terminate", 
+              "contract_claim_revoke", "contract_claim_continue", "contract_claim_formal", 
+              "contract_claim_detail"
+            ]
+          },
+          {
+            "id": "claim_2_payment",
+            "title": "2. 支付或返还购房款",
+            "ui_mode": "checkbox_activation",
+            "trigger_field_true": "payment_has_issue",
+            "trigger_field_false": "payment_no_issue",
+            "detail_fields": [
+              "payment_return_down", "payment_return_deposit", "payment_return_paid", 
+              "payment_pay_owed", "payment_penalty", "payment_interest", "payment_compensation", 
+              "payment_amount_detail"
+            ]
+          },
+          {
+            "id": "claim_3_delivery",
+            "title": "3. 交付或返还房屋",
+            "ui_mode": "checkbox_activation",
+            "trigger_field_true": "delivery_has_issue",
+            "trigger_field_false": "delivery_no_issue",
+            "detail_fields": [
+              "delivery_claim_yes", "delivery_claim_no", 
+              "return_claim_yes", "return_claim_no", 
+              "delay_penalty_yes", "delay_penalty_no"
+            ]
+          },
+          {
+            "id": "claim_4_registration",
+            "title": "4. 办理房屋登记手续",
+            "ui_mode": "checkbox_activation",
+            "trigger_field_true": "registration_has_issue",
+            "trigger_field_false": "registration_no_issue",
+            "detail_fields": [
+              "registration_assist_yes", "registration_assist_no", 
+              "registration_penalty_yes", "registration_penalty_no"
+            ]
+          },
+          {
+            "id": "claim_5_agency",
+            "title": "5. 返还或承担中介服务费",
+            "ui_mode": "checkbox_activation",
+            "trigger_field_true": "agency_fee_has_issue",
+            "trigger_field_false": "agency_fee_no_issue",
+            "detail_fields": [
+              "agency_fee_return_yes", "agency_fee_return_no", 
+              "agency_fee_bear_yes", "agency_fee_bear_no", 
+              "agency_fee_amount_detail"
+            ]
+          },
+          {
+            "id": "claim_6_quality",
+            "title": "6. 房屋质量损害赔偿",
+            "ui_mode": "checkbox_activation",
+            "trigger_field_true": "quality_has_issue",
+            "trigger_field_false": "quality_no_issue",
+            "detail_fields": [
+              "quality_repair_yes", "quality_repair_no", 
+              "quality_cost_yes", "quality_cost_no", 
+              "quality_amount_detail"
+            ]
+          },
+          {
+            "id": "claim_7_mortgage",
+            "title": "7. 解除担保贷款（按揭）合同",
+            "ui_mode": "checkbox_activation",
+            "trigger_field_true": "mortgage_has_issue",
+            "trigger_field_false": "mortgage_no_issue",
+            "detail_fields": [
+              "mortgage_requirement"
+            ]
+          },
+          {
+            "id": "claim_8_appraisal",
+            "title": "8. 鉴定及其他实现债权的费用",
+            "ui_mode": "checkbox_activation",
+            "trigger_field_true": "appraisal_has_issue",
+            "trigger_field_false": "appraisal_no_issue",
+            "detail_fields": [
+              "appraisal_request_yes", "appraisal_request_no", "appraisal_cost_detail"
+            ]
+          },
+          {
+            "id": "claim_others",
+            "title": "9. 诉讼费及其他请求",
+            "ui_mode": "static_section",
+            "fields": [
+              "litigation_cost_yes", "litigation_cost_no", 
+              "other_request", "total_amount"
             ]
           }
         ]
       },
       {
-        "id": "jurisdiction_preservation",
+        "id": "section_jurisdiction",
         "title": "三、约定管辖和诉前保全",
-        "icon": "Document",
-        "defaultExpanded": true,
-        "subgroups": [
+        "groups": [
           {
-            "id": "jurisdiction",
+            "id": "jurisdiction_info",
             "title": "3.1 仲裁或法院管辖约定",
-            "description": "如有约定，填写合同条款内容",
-            "prefixPattern": "jurisdiction_"
+            "ui_mode": "radio_group_boolean",
+            "fields": [
+              "jurisdiction_has", "jurisdiction_none"
+            ],
+            "detail_fields": ["jurisdiction_content"]
           },
           {
-            "id": "preservation",
+            "id": "preservation_info",
             "title": "3.2 诉前财产保全情况",
-            "description": "如已保全，填写保全法院、保全时间、保全案号",
-            "prefixPattern": "preservation_"
+            "ui_mode": "radio_group_boolean",
+            "fields": [
+              "preservation_yes", "preservation_no"
+            ],
+            "detail_fields": [
+              "preservation_court", "preservation_time", "preservation_case_no"
+            ]
           }
         ]
       },
       {
-        "id": "facts_reasons",
+        "id": "section_facts",
         "title": "四、事实与理由",
-        "icon": "Document",
-        "defaultExpanded": true,
-        "subgroups": [
+        "description": "请根据以下要素完善案件详情",
+        "groups": [
           {
-            "id": "facts_detail",
-            "title": "4.1 事实与理由详述",
-            "description": "完整陈述纠纷的经过、原因和理由",
+            "id": "facts_summary",
+            "title": "事实与理由概述",
             "fields": ["facts_and_reasons"]
           },
           {
-            "id": "key_facts",
-            "title": "4.2 关键事实要素",
-            "type": "section",
-            "subgroups": [
+            "id": "fact_element_1",
+            "title": "要素一：合同基本情况",
+            "fields": [
+              "contract_date", 
+              "house_location", "house_area", "house_unit_price", "house_total_price"
+            ],
+            "sub_groups": [
               {
-                "id": "contract_basic",
-                "title": "要素一：合同基本情况",
-                "description": "合同订立时间、房屋性质、位置、面积、价格、是否预售、是否网签、合同性质等",
-                "fields": ["contract_date", "house_type_commercial", "house_type_affordable", "house_type_self_built", "house_type_other", "house_location", "house_area", "house_unit_price", "house_total_price", "house_first_sale_yes", "house_first_sale_no", "house_presale_yes", "house_presale_no", "online_signed_yes", "online_signed_no", "contract_nature_formal", "contract_nature_preliminary"]
+                "label": "房屋性质",
+                "fields": ["house_type_commercial", "house_type_affordable", "house_type_self_built", "house_type_other"]
               },
               {
-                "id": "payment_situation",
-                "title": "要素二：购房款支付情况",
-                "description": "支付方式、已付/欠付金额、定金情况、合同约定等",
-                "fields": ["payment_method_mortgage", "payment_method_cash", "payment_method_house", "payment_method_other", "payment_amount", "deposit_paid_yes", "deposit_amount", "deposit_paid_no", "payment_agreement", "payment_other_reason"]
+                "label": "销售属性",
+                "fields": ["house_first_sale_yes", "house_first_sale_no", "house_presale_yes", "house_presale_no"]
               },
               {
-                "id": "delivery_situation",
-                "title": "要素三：房屋交付情况",
-                "description": "是否实际交付、是否存在面积差、合同约定交房时间等",
-                "fields": ["delivery_actual_yes", "delivery_actual_no", "area_diff_yes", "area_diff_no", "parking_yes", "parking_no", "delivery_agreed_time"]
+                "label": "登记备案情况",
+                "fields": ["presale_registered_yes", "presale_registered_no", "online_signed_yes", "online_signed_no", "advance_registered_yes", "advance_registered_no"]
               },
               {
-                "id": "registration_situation",
-                "title": "要素四：房屋登记手续办理情况",
-                "description": "是否取得首次登记、是否办理转移登记、违约金约定等",
-                "fields": ["first_registration_yes", "first_registration_no", "transfer_registration_yes", "transfer_registration_no", "overdue_cert_penalty", "penalty_calculation"]
-              },
-              {
-                "id": "agency_fee_reason",
-                "title": "要素五：中介服务费相关事由",
-                "description": "填写要求返还或承担中介费的原因",
-                "fields": ["agency_fee_return", "agency_fee_bear", "agency_fee_reason"]
-              },
-              {
-                "id": "quality_description",
-                "title": "要素六：房屋质量问题描述",
-                "description": "质量问题类型、是否在质保期、是否通知维修等",
-                "fields": ["quality_serious", "quality_repairable", "warranty_yes", "warranty_no", "repair_action_yes", "repair_action_no", "repair_notice_yes", "repair_notice_no", "compensation_amount"]
-              },
-              {
-                "id": "mortgage_situation",
-                "title": "要素七：担保贷款（按揭）合同情况",
-                "description": "是否已签订，如已签订填写具体情况",
-                "fields": ["mortgage_contract_yes", "mortgage_contract_detail", "mortgage_contract_no"]
-              },
-              {
-                "id": "appraisal_facts",
-                "title": "要素八：申请鉴定的事实",
-                "description": "描述需要鉴定的原因和具体情况",
-                "fields": ["appraisal_fact_yes", "appraisal_fact_detail", "appraisal_fact_no"]
-              },
-              {
-                "id": "legal_basis",
-                "title": "要素九：请求的法律与合同依据",
-                "description": "填写所依据的合同条款和法律条文",
-                "fields": ["legal_basis_contract", "legal_basis_law"]
+                "label": "合同性质与解除",
+                "fields": ["contract_nature_formal", "contract_nature_preliminary", "termination_notice_yes", "termination_notice_no", "termination_reason"]
               }
             ]
           },
           {
-            "id": "evidence_list",
-            "title": "4.3 证据清单",
-            "description": "列出所有证据材料的名称清单，可另附页",
-            "fields": ["evidence_list"]
-          }
-        ]
-      },
-      {
-        "id": "mediation_willingness",
-        "title": "五、纠纷解决方式意愿",
-        "icon": "ChatDotRound",
-        "defaultExpanded": false,
-        "subgroups": [
-          {
-            "id": "mediation_knowledge",
-            "title": "5.1 对调解的认知",
-            "description": "确认是否知悉调解程序的好处（快速启动、费用减免、保密性等）",
-            "fields": ["mediation_understand", "mediation_not_understand", "mediation_benefit1_understand", "mediation_benefit1_not_understand", "mediation_benefit2_understand", "mediation_benefit2_not_understand", "mediation_benefit3_understand", "mediation_benefit3_not_understand", "mediation_benefit4_understand", "mediation_benefit4_not_understand", "mediation_benefit5_understand", "mediation_benefit5_not_understand"]
+            "id": "fact_element_2",
+            "title": "要素二：购房款支付情况",
+            "fields": [
+              "payment_amount", "deposit_amount", "payment_agreement", "payment_other_reason"
+            ],
+            "sub_groups": [
+              {
+                "label": "支付方式",
+                "fields": ["payment_method_mortgage", "payment_method_cash", "payment_method_house", "payment_method_other"]
+              },
+              {
+                "label": "定金与装修",
+                "fields": ["deposit_paid_yes", "deposit_paid_no", "decoration_yes", "decoration_no"]
+              }
+            ]
           },
           {
-            "id": "mediation_consideration",
-            "title": "5.2 是否考虑先行调解",
-            "fields": ["consider_mediation_yes", "consider_mediation_no", "consider_mediation_uncertain"]
+            "id": "fact_element_3",
+            "title": "要素三：房屋交付情况",
+            "fields": ["delivery_agreed_time"],
+            "sub_groups": [
+              {
+                "label": "交付状态",
+                "fields": ["delivery_actual_yes", "delivery_actual_no", "area_diff_yes", "area_diff_no", "parking_yes", "parking_no"]
+              }
+            ]
+          },
+          {
+            "id": "fact_element_4",
+            "title": "要素四：登记办证情况",
+            "fields": ["overdue_cert_penalty", "penalty_calculation"],
+            "sub_groups": [
+              {
+                "label": "登记状态",
+                "fields": ["first_registration_yes", "first_registration_no", "transfer_registration_yes", "transfer_registration_no"]
+              }
+            ]
+          },
+          {
+            "id": "fact_element_5",
+            "title": "要素五：中介与质量",
+            "fields": [
+              "agency_fee_reason", "compensation_amount"
+            ],
+            "sub_groups": [
+              {
+                "label": "中介费承担",
+                "fields": ["agency_fee_return", "agency_fee_bear"]
+              },
+              {
+                "label": "质量问题性质",
+                "fields": ["quality_serious", "quality_repairable"]
+              },
+              {
+                "label": "维修情况",
+                "fields": ["warranty_yes", "warranty_no", "repair_action_yes", "repair_action_no", "repair_notice_yes", "repair_notice_no"]
+              }
+            ]
+          },
+          {
+            "id": "fact_element_6",
+            "title": "要素六：按揭与鉴定",
+            "sub_groups": [
+              {
+                "label": "担保贷款合同",
+                "fields": ["mortgage_contract_yes", "mortgage_contract_no", "mortgage_contract_detail"]
+              },
+              {
+                "label": "鉴定申请",
+                "fields": ["appraisal_fact_yes", "appraisal_fact_no", "appraisal_fact_detail"]
+              }
+            ]
+          },
+          {
+            "id": "fact_legal_basis",
+            "title": "请求依据与证据",
+            "fields": ["legal_basis_contract", "legal_basis_law", "evidence_list"]
           }
         ]
       },
       {
-        "id": "signature",
-        "title": "六、具状人签署",
-        "icon": "Edit",
-        "defaultExpanded": false,
-        "subgroups": [
+        "id": "section_mediation",
+        "title": "五、纠纷解决方式意愿",
+        "ui_mode": "accordion_questionnaire",
+        "groups": [
           {
-            "id": "signature_info",
-            "title": "签署信息",
-            "description": "具状人签字/盖章及日期",
-            "fields": ["claim_content"]
+            "id": "mediation_q1",
+            "title": "是否了解调解的非诉性质",
+            "fields": ["mediation_understand", "mediation_not_understand"]
+          },
+          {
+            "id": "mediation_q2",
+            "title": "是否了解先行调解的好处",
+            "type": "checklist_confirmation",
+            "sub_items": [
+              { "text": "快速启动程序", "fields": ["mediation_benefit1_understand", "mediation_benefit1_not_understand"] },
+              { "text": "费用减免政策", "fields": ["mediation_benefit2_understand", "mediation_benefit2_not_understand"] },
+              { "text": "灵活更换调解员", "fields": ["mediation_benefit3_understand", "mediation_benefit3_not_understand"] },
+              { "text": "保密性保障", "fields": ["mediation_benefit4_understand", "mediation_benefit4_not_understand"] },
+              { "text": "司法确认效力", "fields": ["mediation_benefit5_understand", "mediation_benefit5_not_understand"] }
+            ]
+          },
+          {
+            "id": "mediation_decision",
+            "title": "是否考虑先行调解",
+            "fields": ["consider_mediation_yes", "consider_mediation_no", "consider_mediation_uncertain"]
           }
         ]
       }

@@ -108,159 +108,140 @@
   </el-dialog>
 </template>
 
-<script>
+<script setup>
 import { ref, watch, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { InfoFilled, Upload } from '@element-plus/icons-vue'
 import { DocumentService } from '@/services/documentService'
 
-export default {
-  name: 'AIPlaceholderDialog',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    placeholders: {
-      type: Array,
-      default: () => []
-    }
+const props = defineProps({
+  visible: {
+    type: Boolean,
+    default: false
   },
-  emits: ['confirm', 'cancel'],
-  setup(props, { emit }) {
-    const formData = ref({
-      provider: 'deepseek',
-      apiKey: 'sk-94498aa676b64586ab39474fefbba9bb',
-      apiUrl: '',
-      model: '',
-      documentType: ''
-    })
-    const isGenerating = ref(false)
-    const previewContent = ref('')
-    const dataFile = ref(null)
-    const uploadRef = ref(null)
+  placeholders: {
+    type: Array,
+    default: () => []
+  }
+})
 
-    const dialogVisible = computed({
-      get: () => props.visible,
-      set: (val) => {
-        if (!val) {
-          emit('cancel')
-        }
-      }
-    })
+const emit = defineEmits(['confirm', 'cancel'])
 
-    watch(() => props.visible, (newVal) => {
-      if (newVal) {
-        // 重置状态
-        dataFile.value = null
-        previewContent.value = ''
-        formData.value.documentType = ''
-      }
-    })
+const formData = ref({
+  provider: 'deepseek',
+  apiKey: 'sk-94498aa676b64586ab39474fefbba9bb',
+  apiUrl: '',
+  model: '',
+  documentType: ''
+})
 
-    const handleFileChange = async (uploadFile) => {
-      const file = uploadFile.raw
-      
-      if (!file) return
+const isGenerating = ref(false)
+const previewContent = ref('')
+const dataFile = ref(null)
+const uploadRef = ref(null)
 
-      try {
-        // 读取 Word 文档内容
-        const result = await DocumentService.parseWordDocument(file)
-        previewContent.value = result.html
-        
-        // 提取纯文本
-        const tempDiv = document.createElement('div')
-        tempDiv.innerHTML = result.html
-        const plainText = tempDiv.textContent || tempDiv.innerText || ''
-        
-        dataFile.value = {
-          file: file,
-          content: plainText,
-          html: result.html
-        }
-        
-        ElMessage.success('资料文件读取成功')
-      } catch (error) {
-        console.error('文件读取失败:', error)
-        ElMessage.error('文件读取失败: ' + error.message)
-        dataFile.value = null
-        previewContent.value = ''
-      }
-    }
-
-    const handleFileRemove = () => {
-      dataFile.value = null
-      previewContent.value = ''
-    }
-
-    const showDocTypeHelp = () => {
-      ElMessageBox.alert(
-        '常见文档类型：个人简历、劳动合同、销售合同、租赁合同、案件材料、证明文件等。\n\n提供文档类型有助于 AI 更准确地提取信息。',
-        '文档类型说明',
-        { confirmButtonText: '知道了' }
-      )
-    }
-
-    const handleGenerate = () => {
-      if (!dataFile.value) {
-        ElMessage.warning('请先上传资料文件')
-        return
-      }
-
-      isGenerating.value = true
-      
-      // 传递给 AI 的数据
-      const aiData = {
-        ...formData.value,
-        dataFileContent: dataFile.value.content,
-        placeholders: props.placeholders,
-        documentType: formData.value.documentType
-      }
-      
-      emit('confirm', aiData)
-    }
-
-    const handleProviderChange = (provider) => {
-      // 切换提供商时更新默认配置
-      if (provider === 'deepseek') {
-        formData.value.apiKey = 'sk-94498aa676b64586ab39474fefbba9bb'
-        formData.value.model = 'deepseek-chat'
-        formData.value.apiUrl = ''
-      } else if (provider === 'kimi') {
-        formData.value.apiKey = 'sk-Y1Aby7GAeIqfxU7MbwBWRno8F6oHfDmy02hREFSKDM5rTiCO'
-        formData.value.model = 'moonshot-v1-8k'
-        formData.value.apiUrl = ''
-      } else if (provider === 'gemini') {
-        formData.value.apiKey = 'AIzaSyDjDiBhXDcoIgllDcb5vUb80wuRajea2B8'
-        formData.value.model = 'gemini-pro'
-        formData.value.apiUrl = ''
-      }
-    }
-
-    const handleClose = () => {
-      isGenerating.value = false
+const dialogVisible = computed({
+  get: () => props.visible,
+  set: (val) => {
+    if (!val) {
       emit('cancel')
     }
+  }
+})
 
-    return {
-      formData,
-      dialogVisible,
-      isGenerating,
-      previewContent,
-      dataFile,
-      uploadRef,
-      InfoFilled,
-      Upload,
-      handleProviderChange,
-      handleFileChange,
-      handleFileRemove,
-      handleGenerate,
-      handleClose,
-      showDocTypeHelp
+watch(() => props.visible, (newVal) => {
+  if (newVal) {
+    // 重置状态
+    dataFile.value = null
+    previewContent.value = ''
+    formData.value.documentType = ''
+  }
+})
+
+const handleFileChange = async (uploadFile) => {
+  const file = uploadFile.raw
+  if (!file) return
+
+  try {
+    // 读取 Word 文档内容
+    const result = await DocumentService.parseWordDocument(file)
+    previewContent.value = result.html
+
+    // 提取纯文本
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = result.html
+    const plainText = tempDiv.textContent || tempDiv.innerText || ''
+
+    dataFile.value = {
+      file: file,
+      content: plainText,
+      html: result.html
     }
+
+    ElMessage.success('资料文件读取成功')
+  } catch (error) {
+    console.error('文件读取失败:', error)
+    ElMessage.error('文件读取失败: ' + error.message)
+    dataFile.value = null
+    previewContent.value = ''
   }
 }
+
+const handleFileRemove = () => {
+  dataFile.value = null
+  previewContent.value = ''
+}
+
+const showDocTypeHelp = () => {
+  ElMessageBox.alert(
+    '常见文档类型：个人简历、劳动合同、销售合同、租赁合同、案件材料、证明文件等。\n\n提供文档类型有助于 AI 更准确地提取信息。',
+    '文档类型说明',
+    { confirmButtonText: '知道了' }
+  )
+}
+
+const handleGenerate = () => {
+  if (!dataFile.value) {
+    ElMessage.warning('请先上传资料文件')
+    return
+  }
+
+  isGenerating.value = true
+
+  // 传递给 AI 的数据
+  const aiData = {
+    ...formData.value,
+    dataFileContent: dataFile.value.content,
+    placeholders: props.placeholders,
+    documentType: formData.value.documentType
+  }
+
+  emit('confirm', aiData)
+}
+
+const handleProviderChange = (provider) => {
+  // 切换提供商时更新默认配置
+  if (provider === 'deepseek') {
+    formData.value.apiKey = 'sk-94498aa676b64586ab39474fefbba9bb'
+    formData.value.model = 'deepseek-chat'
+    formData.value.apiUrl = ''
+  } else if (provider === 'kimi') {
+    formData.value.apiKey = 'sk-Y1Aby7GAeIqfxU7MbwBWRno8F6oHfDmy02hREFSKDM5rTiCO'
+    formData.value.model = 'moonshot-v1-8k'
+    formData.value.apiUrl = ''
+  } else if (provider === 'gemini') {
+    formData.value.apiKey = 'AIzaSyDjDiBhXDcoIgllDcb5vUb80wuRajea2B8'
+    formData.value.model = 'gemini-pro'
+    formData.value.apiUrl = ''
+  }
+}
+
+const handleClose = () => {
+  isGenerating.value = false
+  emit('cancel')
+}
 </script>
+
 
 <style scoped>
 .preview-textarea {

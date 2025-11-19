@@ -42,90 +42,80 @@
   </el-dialog>
 </template>
 
-<script>
+<script setup>
 import { ref, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 
-export default {
-  name: 'PlaceholderDialog',
-  props: {
-    visible: {
-      type: Boolean,
-      default: false
-    },
-    placeholder: {
-      type: Object,
-      default: null
-    },
-    mode: {
-      type: String,
-      default: 'create'
-    }
+const props = defineProps({
+  visible: {
+    type: Boolean,
+    default: false
   },
-  emits: ['confirm', 'cancel'],
-  setup(props, { emit }) {
-    const formData = ref({
-      name: '',
-      description: '',
-      aiPrompt: ''
-    })
+  placeholder: {
+    type: Object,
+    default: null
+  },
+  mode: {
+    type: String,
+    default: 'create'
+  }
+})
 
-    const dialogVisible = computed({
-      get: () => props.visible,
-      set: (val) => {
-        if (!val) {
-          emit('cancel')
-        }
-      }
-    })
+const emit = defineEmits(['confirm', 'cancel'])
 
-    watch(() => props.visible, (newVal) => {
-      if (newVal) {
-        if (props.mode === 'edit' && props.placeholder) {
-          formData.value = {
-            name: props.placeholder.name || '',
-            description: props.placeholder.description || '',
-            aiPrompt: props.placeholder.aiPrompt || ''
-          }
-        } else {
-          formData.value = {
-            name: '',
-            description: '',
-            aiPrompt: ''
-          }
-        }
-      }
-    })
+const formData = ref({
+  name: '',
+  description: '',
+  aiPrompt: ''
+})
 
-    watch(() => props.placeholder, (newVal) => {
-      if (newVal && props.mode === 'edit') {
-        formData.value = {
-          name: newVal.name || '',
-          description: newVal.description || '',
-          aiPrompt: newVal.aiPrompt || ''
-        }
-      }
-    })
-
-    const handleConfirm = () => {
-      if (!formData.value.name.trim()) {
-        ElMessage.warning('请输入占位符名称')
-        return
-      }
-
-      emit('confirm', { ...formData.value })
-    }
-
-    const handleClose = () => {
+const dialogVisible = computed({
+  get: () => props.visible,
+  set: (val) => {
+    if (!val) {
       emit('cancel')
     }
+  }
+})
 
-    return {
-      formData,
-      dialogVisible,
-      handleConfirm,
-      handleClose
+watch(() => props.visible, (newVal) => {
+  if (newVal) {
+    if (props.mode === 'edit' && props.placeholder) {
+      formData.value = {
+        name: props.placeholder.name || '',
+        description: props.placeholder.description || '',
+        aiPrompt: props.placeholder.aiPrompt || ''
+      }
+    } else {
+      formData.value = {
+        name: '',
+        description: '',
+        aiPrompt: ''
+      }
     }
   }
+})
+
+watch(() => props.placeholder, (newVal) => {
+  if (newVal && props.mode === 'edit') {
+    formData.value = {
+      name: newVal.name || '',
+      description: newVal.description || '',
+      aiPrompt: newVal.aiPrompt || ''
+    }
+  }
+})
+
+const handleConfirm = () => {
+  if (!formData.value.name.trim()) {
+    ElMessage.warning('请输入占位符名称')
+    return
+  }
+  emit('confirm', { ...formData.value })
+}
+
+const handleClose = () => {
+  emit('cancel')
 }
 </script>
+

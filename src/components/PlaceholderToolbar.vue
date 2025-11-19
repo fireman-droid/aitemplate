@@ -22,12 +22,10 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: 'PlaceholderToolbar',
-  emits: ['ai-generate', 'download']
-}
+<script setup>
+defineEmits(['ai-generate', 'download'])
 </script>
+
 
 <style scoped>
 .placeholder-toolbar {
