@@ -38,7 +38,7 @@ export class TemplateService {
    */
   static async loadTemplateConfig(templateId) {
     try {
-      const response = await fetch(`/src/templates/${templateId}/config.json`)
+      const response = await fetch(`/src/templates/${templateId}/biaodan.json`)
       if (!response.ok) {
         throw new Error(`加载模板配置失败: ${response.statusText}`)
       }
