@@ -28,7 +28,7 @@
     <div v-else class="editor-workspace">
       <!-- 顶部工具栏 -->
       <div class="top-toolbar">
-        <h2>{{ templateStore.currentTemplate.name }}</h2>
+        <h2>{{ currentTemplateConfig?.template_config?.template_name || templateStore.currentTemplate.name }}</h2>
         <div class="toolbar-actions">
           <el-button type="success" @click="showAIDialog" :icon="MagicStick">AI 智能提取</el-button>
           <el-button @click="showPreviewDrawer = true" :icon="View">预览模板</el-button>
@@ -277,6 +277,9 @@ const handlePreviewUpdate = (formData) => {
       content = content.replace(regex, '')
     }
   })
+
+  // 清除所有剩余的占位符（那些不在 formData 中的）
+  content = content.replace(/\{[^}]+\}/g, '')
 
   // 更新预览内容
   templateStore.updateTemplate({ content: content })

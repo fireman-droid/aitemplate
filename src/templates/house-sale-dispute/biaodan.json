@@ -20,33 +20,65 @@
                     "label": "自然人",
                     "value": "natural",
                     "fields": [
-                      "p_name", "p_gender_m", "p_gender_f", "p_birth_y", "p_birth_m", "p_birth_d", 
-                      "p_ethnic", "p_company", "p_position", "p_phone", "p_reg_addr", "p_res_addr", 
-                      "p_id_type", "p_id_num"
+                      "p_name",
+                      "p_gender_m",
+                      "p_gender_f",
+                      "p_birth_y",
+                      "p_birth_m",
+                      "p_birth_d",
+                      "p_ethnic",
+                      "p_company",
+                      "p_position",
+                      "p_phone",
+                      "p_reg_addr",
+                      "p_res_addr",
+                      "p_id_type",
+                      "p_id_num"
                     ]
                   },
                   {
                     "label": "法人/非法人组织",
                     "value": "legal",
                     "fields": [
-                      "pc_name", "pc_addr", "pc_reg_addr", "pc_legal_rep", "pc_position", "pc_phone", "pc_credit_code"
+                      "pc_name",
+                      "pc_addr",
+                      "pc_reg_addr",
+                      "pc_legal_rep",
+                      "pc_position",
+                      "pc_phone",
+                      "pc_credit_code"
                     ],
                     "sub_groups": [
                       {
-                        "label": "单位类型 (单选)",
+                        "label": "单位类型",
                         "ui_mode": "radio_group_boolean",
                         "fields": [
-                          "pc_type_llc", "pc_type_jsc", "pc_type_listed", "pc_type_other_ent", 
-                          "pc_type_inst", "pc_type_org", "pc_type_fund", "pc_type_service", 
-                          "pc_type_gov", "pc_type_rural", "pc_type_coop", "pc_type_community", 
-                          "pc_type_sole", "pc_type_partner", "pc_type_prof"
+                          "pc_type_llc",
+                          "pc_type_jsc",
+                          "pc_type_listed",
+                          "pc_type_other_ent",
+                          "pc_type_inst",
+                          "pc_type_org",
+                          "pc_type_fund",
+                          "pc_type_service",
+                          "pc_type_gov",
+                          "pc_type_rural",
+                          "pc_type_coop",
+                          "pc_type_community",
+                          "pc_type_sole",
+                          "pc_type_partner",
+                          "pc_type_prof"
                         ]
                       },
                       {
-                        "label": "所有制性质 (单选)",
+                        "label": "所有制性质",
                         "ui_mode": "radio_group_boolean",
                         "fields": [
-                          "pc_own_state", "pc_own_state_ctrl", "pc_own_state_share", "pc_own_private", "pc_own_other"
+                          "pc_own_state",
+                          "pc_own_state_ctrl",
+                          "pc_own_state_share",
+                          "pc_own_private",
+                          "pc_own_other"
                         ]
                       }
                     ]
@@ -62,8 +94,12 @@
             "trigger_field_true": "pa_has",
             "trigger_field_false": "pa_none",
             "fields": [
-              "pa_name", "pa_company", "pa_position", "pa_phone", 
-              "pa_auth_general", "pa_auth_special"
+              "pa_name",
+              "pa_company",
+              "pa_position",
+              "pa_phone",
+              "pa_auth_general",
+              "pa_auth_special"
             ]
           },
           {
@@ -79,33 +115,65 @@
                     "label": "自然人",
                     "value": "natural",
                     "fields": [
-                      "d_name", "d_gender_m", "d_gender_f", "d_birth_y", "d_birth_m", "d_birth_d", 
-                      "d_ethnic", "d_company", "d_position", "d_phone", "d_reg_addr", "d_res_addr", 
-                      "d_id_type", "d_id_num"
+                      "d_name",
+                      "d_gender_m",
+                      "d_gender_f",
+                      "d_birth_y",
+                      "d_birth_m",
+                      "d_birth_d",
+                      "d_ethnic",
+                      "d_company",
+                      "d_position",
+                      "d_phone",
+                      "d_reg_addr",
+                      "d_res_addr",
+                      "d_id_type",
+                      "d_id_num"
                     ]
                   },
                   {
                     "label": "法人/非法人组织",
                     "value": "legal",
                     "fields": [
-                      "dc_name", "dc_addr", "dc_reg_addr", "dc_legal_rep", "dc_position", "dc_phone", "dc_credit_code"
+                      "dc_name",
+                      "dc_addr",
+                      "dc_reg_addr",
+                      "dc_legal_rep",
+                      "dc_position",
+                      "dc_phone",
+                      "dc_credit_code"
                     ],
                     "sub_groups": [
                       {
-                        "label": "单位类型 (单选)",
+                        "label": "单位类型",
                         "ui_mode": "radio_group_boolean",
                         "fields": [
-                          "dc_type_llc", "dc_type_jsc", "dc_type_listed", "dc_type_other_ent", 
-                          "dc_type_inst", "dc_type_org", "dc_type_fund", "dc_type_service", 
-                          "dc_type_gov", "dc_type_rural", "dc_type_coop", "dc_type_community", 
-                          "dc_type_sole", "dc_type_partner", "dc_type_prof"
+                          "dc_type_llc",
+                          "dc_type_jsc",
+                          "dc_type_listed",
+                          "dc_type_other_ent",
+                          "dc_type_inst",
+                          "dc_type_org",
+                          "dc_type_fund",
+                          "dc_type_service",
+                          "dc_type_gov",
+                          "dc_type_rural",
+                          "dc_type_coop",
+                          "dc_type_community",
+                          "dc_type_sole",
+                          "dc_type_partner",
+                          "dc_type_prof"
                         ]
                       },
                       {
-                        "label": "所有制性质 (单选)",
+                        "label": "所有制性质",
                         "ui_mode": "radio_group_boolean",
                         "fields": [
-                          "dc_own_state", "dc_own_state_ctrl", "dc_own_state_share", "dc_own_private", "dc_own_other"
+                          "dc_own_state",
+                          "dc_own_state_ctrl",
+                          "dc_own_state_share",
+                          "dc_own_private",
+                          "dc_own_other"
                         ]
                       }
                     ]
@@ -127,33 +195,65 @@
                     "label": "自然人",
                     "value": "natural",
                     "fields": [
-                      "t_name", "t_gender_m", "t_gender_f", "t_birth_y", "t_birth_m", "t_birth_d", 
-                      "t_ethnic", "t_company", "t_position", "t_phone", "t_reg_addr", "t_res_addr", 
-                      "t_id_type", "t_id_num"
+                      "t_name",
+                      "t_gender_m",
+                      "t_gender_f",
+                      "t_birth_y",
+                      "t_birth_m",
+                      "t_birth_d",
+                      "t_ethnic",
+                      "t_company",
+                      "t_position",
+                      "t_phone",
+                      "t_reg_addr",
+                      "t_res_addr",
+                      "t_id_type",
+                      "t_id_num"
                     ]
                   },
                   {
                     "label": "法人/非法人组织",
                     "value": "legal",
                     "fields": [
-                      "tc_name", "tc_addr", "tc_reg_addr", "tc_legal_rep", "tc_position", "tc_phone", "tc_credit_code"
+                      "tc_name",
+                      "tc_addr",
+                      "tc_reg_addr",
+                      "tc_legal_rep",
+                      "tc_position",
+                      "tc_phone",
+                      "tc_credit_code"
                     ],
                     "sub_groups": [
                       {
-                        "label": "单位类型 (单选)",
+                        "label": "单位类型",
                         "ui_mode": "radio_group_boolean",
                         "fields": [
-                          "tc_type_llc", "tc_type_jsc", "tc_type_listed", "tc_type_other_ent", 
-                          "tc_type_inst", "tc_type_org", "tc_type_fund", "tc_type_service", 
-                          "tc_type_gov", "tc_type_rural", "tc_type_coop", "tc_type_community", 
-                          "tc_type_sole", "tc_type_partner", "tc_type_prof"
+                          "tc_type_llc",
+                          "tc_type_jsc",
+                          "tc_type_listed",
+                          "tc_type_other_ent",
+                          "tc_type_inst",
+                          "tc_type_org",
+                          "tc_type_fund",
+                          "tc_type_service",
+                          "tc_type_gov",
+                          "tc_type_rural",
+                          "tc_type_coop",
+                          "tc_type_community",
+                          "tc_type_sole",
+                          "tc_type_partner",
+                          "tc_type_prof"
                         ]
                       },
                       {
-                        "label": "所有制性质 (单选)",
+                        "label": "所有制性质",
                         "ui_mode": "radio_group_boolean",
                         "fields": [
-                          "tc_own_state", "tc_own_state_ctrl", "tc_own_state_share", "tc_own_private", "tc_own_other"
+                          "tc_own_state",
+                          "tc_own_state_ctrl",
+                          "tc_own_state_share",
+                          "tc_own_private",
+                          "tc_own_other"
                         ]
                       }
                     ]
@@ -174,7 +274,7 @@
             "title": "诉讼请求总述",
             "description": "请在此处概括您的核心诉求（对应文档开头的 {claim_content}）",
             "ui_mode": "textarea_full_width",
-            "fields": ["claim_content"] 
+            "fields": ["claim_content"]
           },
           {
             "id": "claim_1_contract",
@@ -183,8 +283,12 @@
             "trigger_field_true": "contract_has_issue",
             "trigger_field_false": "contract_no_issue",
             "detail_fields": [
-              "contract_claim_invalid", "contract_claim_not_formed", "contract_claim_terminate", 
-              "contract_claim_revoke", "contract_claim_continue", "contract_claim_formal", 
+              "contract_claim_invalid",
+              "contract_claim_not_formed",
+              "contract_claim_terminate",
+              "contract_claim_revoke",
+              "contract_claim_continue",
+              "contract_claim_formal",
               "contract_claim_detail"
             ]
           },
@@ -195,8 +299,13 @@
             "trigger_field_true": "payment_has_issue",
             "trigger_field_false": "payment_no_issue",
             "detail_fields": [
-              "payment_return_down", "payment_return_deposit", "payment_return_paid", 
-              "payment_pay_owed", "payment_penalty", "payment_interest", "payment_compensation", 
+              "payment_return_down",
+              "payment_return_deposit",
+              "payment_return_paid",
+              "payment_pay_owed",
+              "payment_penalty",
+              "payment_interest",
+              "payment_compensation",
               "payment_amount_detail"
             ]
           },
@@ -207,9 +316,12 @@
             "trigger_field_true": "delivery_has_issue",
             "trigger_field_false": "delivery_no_issue",
             "detail_fields": [
-              "delivery_claim_yes", "delivery_claim_no", 
-              "return_claim_yes", "return_claim_no", 
-              "delay_penalty_yes", "delay_penalty_no"
+              "delivery_claim_yes",
+              "delivery_claim_no",
+              "return_claim_yes",
+              "return_claim_no",
+              "delay_penalty_yes",
+              "delay_penalty_no"
             ]
           },
           {
@@ -219,8 +331,10 @@
             "trigger_field_true": "registration_has_issue",
             "trigger_field_false": "registration_no_issue",
             "detail_fields": [
-              "registration_assist_yes", "registration_assist_no", 
-              "registration_penalty_yes", "registration_penalty_no"
+              "registration_assist_yes",
+              "registration_assist_no",
+              "registration_penalty_yes",
+              "registration_penalty_no"
             ]
           },
           {
@@ -230,8 +344,10 @@
             "trigger_field_true": "agency_fee_has_issue",
             "trigger_field_false": "agency_fee_no_issue",
             "detail_fields": [
-              "agency_fee_return_yes", "agency_fee_return_no", 
-              "agency_fee_bear_yes", "agency_fee_bear_no", 
+              "agency_fee_return_yes",
+              "agency_fee_return_no",
+              "agency_fee_bear_yes",
+              "agency_fee_bear_no",
               "agency_fee_amount_detail"
             ]
           },
@@ -242,8 +358,10 @@
             "trigger_field_true": "quality_has_issue",
             "trigger_field_false": "quality_no_issue",
             "detail_fields": [
-              "quality_repair_yes", "quality_repair_no", 
-              "quality_cost_yes", "quality_cost_no", 
+              "quality_repair_yes",
+              "quality_repair_no",
+              "quality_cost_yes",
+              "quality_cost_no",
               "quality_amount_detail"
             ]
           },
@@ -253,9 +371,7 @@
             "ui_mode": "checkbox_activation",
             "trigger_field_true": "mortgage_has_issue",
             "trigger_field_false": "mortgage_no_issue",
-            "detail_fields": [
-              "mortgage_requirement"
-            ]
+            "detail_fields": ["mortgage_requirement"]
           },
           {
             "id": "claim_8_appraisal",
@@ -264,17 +380,30 @@
             "trigger_field_true": "appraisal_has_issue",
             "trigger_field_false": "appraisal_no_issue",
             "detail_fields": [
-              "appraisal_request_yes", "appraisal_request_no", "appraisal_cost_detail"
+              "appraisal_request_yes",
+              "appraisal_request_no",
+              "appraisal_cost_detail"
             ]
           },
           {
-            "id": "claim_others",
+            "id": "claim_litigation_cost",
             "title": "9. 诉讼费及其他请求",
-            "ui_mode": "static_section",
-            "fields": [
-              "litigation_cost_yes", "litigation_cost_no", 
-              "other_request", "total_amount"
-            ]
+            "ui_mode": "checkbox_activation",
+            "trigger_field_true": "litigation_cost_yes",
+            "trigger_field_false": "litigation_cost_no",
+            "detail_fields": []
+          },
+          {
+            "id": "claim_other_request",
+            "title": "10. 其他请求",
+            "ui_mode": "simple_fields",
+            "fields": ["other_request"]
+          },
+          {
+            "id": "claim_total_amount",
+            "title": "11. 标的总额",
+            "ui_mode": "simple_fields",
+            "fields": ["total_amount"]
           }
         ]
       },
@@ -286,20 +415,18 @@
             "id": "jurisdiction_info",
             "title": "3.1 仲裁或法院管辖约定",
             "ui_mode": "radio_group_boolean",
-            "fields": [
-              "jurisdiction_has", "jurisdiction_none"
-            ],
+            "fields": ["jurisdiction_has", "jurisdiction_none"],
             "detail_fields": ["jurisdiction_content"]
           },
           {
             "id": "preservation_info",
             "title": "3.2 诉前财产保全情况",
             "ui_mode": "radio_group_boolean",
-            "fields": [
-              "preservation_yes", "preservation_no"
-            ],
+            "fields": ["preservation_yes", "preservation_no"],
             "detail_fields": [
-              "preservation_court", "preservation_time", "preservation_case_no"
+              "preservation_court",
+              "preservation_time",
+              "preservation_case_no"
             ]
           }
         ]
@@ -317,136 +444,317 @@
           {
             "id": "fact_element_1",
             "title": "要素一：合同基本情况",
-            "fields": [
-              "contract_date", 
-              "house_location", "house_area", "house_unit_price", "house_total_price"
-            ],
-            "sub_groups": [
+            "ui_mode": "structured_form",
+            "sections": [
               {
-                "label": "房屋性质",
-                "fields": ["house_type_commercial", "house_type_affordable", "house_type_self_built", "house_type_other"]
+                "label": "合同订立时间",
+                "fields": ["contract_date"]
               },
               {
-                "label": "销售属性",
-                "fields": ["house_first_sale_yes", "house_first_sale_no", "house_presale_yes", "house_presale_no"]
+                "label": "房屋位置",
+                "fields": ["house_location"]
               },
               {
-                "label": "登记备案情况",
-                "fields": ["presale_registered_yes", "presale_registered_no", "online_signed_yes", "online_signed_no", "advance_registered_yes", "advance_registered_no"]
+                "label": "房屋面积",
+                "fields": ["house_area"]
               },
               {
-                "label": "合同性质与解除",
-                "fields": ["contract_nature_formal", "contract_nature_preliminary", "termination_notice_yes", "termination_notice_no", "termination_reason"]
+                "label": "房屋单价",
+                "fields": ["house_unit_price"]
+              },
+              {
+                "label": "总价",
+                "fields": ["house_total_price"]
+              },
+              {
+                "label": "房屋是否首次出售",
+                "fields": ["house_first_sale_yes", "house_first_sale_no"]
+              },
+              {
+                "label": "是否为预售房",
+                "fields": ["house_presale_yes", "house_presale_no"]
+              },
+              {
+                "label": "是否预售登记",
+                "fields": ["presale_registered_yes", "presale_registered_no"]
+              },
+              {
+                "label": "是否网签",
+                "fields": ["online_signed_yes", "online_signed_no"]
+              },
+              {
+                "label": "是否预告登记",
+                "fields": ["advance_registered_yes", "advance_registered_no"]
+              },
+              {
+                "label": "订立的合同性质",
+                "fields": [
+                  "contract_nature_formal",
+                  "contract_nature_preliminary"
+                ]
+              },
+              {
+                "label": "是否已向被告发出解除/撤销通知/催告通知",
+                "fields": ["termination_notice_yes", "termination_notice_no"]
+              },
+              {
+                "label": "解除/撤销事由",
+                "fields": ["termination_reason"]
               }
             ]
           },
           {
             "id": "fact_element_2",
             "title": "要素二：购房款支付情况",
-            "fields": [
-              "payment_amount", "deposit_amount", "payment_agreement", "payment_other_reason"
-            ],
-            "sub_groups": [
+            "ui_mode": "structured_form",
+            "sections": [
               {
-                "label": "支付方式",
-                "fields": ["payment_method_mortgage", "payment_method_cash", "payment_method_house", "payment_method_other"]
+                "label": "支付金额",
+                "fields": ["payment_amount"]
               },
               {
-                "label": "定金与装修",
-                "fields": ["deposit_paid_yes", "deposit_paid_no", "decoration_yes", "decoration_no"]
+                "label": "定金金额",
+                "fields": ["deposit_amount"]
+              },
+              {
+                "label": "支付方式",
+                "ui_mode": "single_choice",
+                "fields": [
+                  "payment_method_mortgage",
+                  "payment_method_cash",
+                  "payment_method_house",
+                  "payment_method_other"
+                ]
+              },
+              {
+                "label": "是否已支付定金",
+                "fields": ["deposit_paid_yes", "deposit_paid_no"]
+              },
+              {
+                "label": "是否已装修",
+                "fields": ["decoration_yes", "decoration_no"]
+              },
+              {
+                "label": "支付约定",
+                "fields": ["payment_agreement"]
+              },
+              {
+                "label": "其他支付原因",
+                "fields": ["payment_other_reason"]
               }
             ]
           },
           {
             "id": "fact_element_3",
             "title": "要素三：房屋交付情况",
-            "fields": ["delivery_agreed_time"],
-            "sub_groups": [
+            "ui_mode": "structured_form",
+            "sections": [
               {
-                "label": "交付状态",
-                "fields": ["delivery_actual_yes", "delivery_actual_no", "area_diff_yes", "area_diff_no", "parking_yes", "parking_no"]
+                "label": "约定交付时间",
+                "fields": ["delivery_agreed_time"]
+              },
+              {
+                "label": "是否实际交付",
+                "fields": ["delivery_actual_yes", "delivery_actual_no"]
+              },
+              {
+                "label": "是否存在面积差异",
+                "fields": ["area_diff_yes", "area_diff_no"]
+              },
+              {
+                "label": "是否包含车位",
+                "fields": ["parking_yes", "parking_no"]
               }
             ]
           },
           {
             "id": "fact_element_4",
             "title": "要素四：登记办证情况",
-            "fields": ["overdue_cert_penalty", "penalty_calculation"],
-            "sub_groups": [
+            "ui_mode": "structured_form",
+            "sections": [
               {
-                "label": "登记状态",
-                "fields": ["first_registration_yes", "first_registration_no", "transfer_registration_yes", "transfer_registration_no"]
+                "label": "是否首次登记",
+                "fields": ["first_registration_yes", "first_registration_no"]
+              },
+              {
+                "label": "是否转移登记",
+                "fields": [
+                  "transfer_registration_yes",
+                  "transfer_registration_no"
+                ]
+              },
+              {
+                "label": "逾期办证违约金",
+                "fields": ["overdue_cert_penalty"]
+              },
+              {
+                "label": "违约金计算方式",
+                "fields": ["penalty_calculation"]
               }
             ]
           },
           {
             "id": "fact_element_5",
-            "title": "要素五：中介与质量",
-            "fields": [
-              "agency_fee_reason", "compensation_amount"
-            ],
-            "sub_groups": [
+            "title": "5. 中介服务费情况",
+            "ui_mode": "structured_form",
+            "sections": [
               {
-                "label": "中介费承担",
+                "label": "",
+                "ui_mode": "single_choice",
                 "fields": ["agency_fee_return", "agency_fee_bear"]
               },
               {
-                "label": "质量问题性质",
-                "fields": ["quality_serious", "quality_repairable"]
-              },
-              {
-                "label": "维修情况",
-                "fields": ["warranty_yes", "warranty_no", "repair_action_yes", "repair_action_no", "repair_notice_yes", "repair_notice_no"]
+                "label": "中介服务费的事由",
+                "fields": ["agency_fee_reason"]
               }
             ]
           },
           {
             "id": "fact_element_6",
-            "title": "要素六：按揭与鉴定",
-            "sub_groups": [
+            "title": "6. 质量损害赔偿相关情况",
+            "ui_mode": "structured_form",
+            "sections": [
               {
-                "label": "担保贷款合同",
-                "fields": ["mortgage_contract_yes", "mortgage_contract_no", "mortgage_contract_detail"]
+                "label": "属于严重影响正常居住使用的质量问题",
+                "fields": ["quality_serious"]
               },
               {
-                "label": "鉴定申请",
-                "fields": ["appraisal_fact_yes", "appraisal_fact_no", "appraisal_fact_detail"]
+                "label": "属于可修复的质量问题",
+                "fields": ["quality_repairable"]
+              },
+              {
+                "label": "是否还在质保期内",
+                "fields": ["warranty_yes", "warranty_no"]
+              },
+              {
+                "label": "是否存在修复行为",
+                "fields": ["repair_action_yes", "repair_action_no"]
+              },
+              {
+                "label": "是否通知维修",
+                "fields": ["repair_notice_yes", "repair_notice_no"]
+              },
+              {
+                "label": "赔偿数额",
+                "fields": ["compensation_amount"]
+              }
+            ]
+          },
+          {
+            "id": "fact_element_7",
+            "title": "7. 是否签订担保贷款（按揭）合同",
+            "ui_mode": "structured_form",
+            "sections": [
+              {
+                "label": "",
+                "ui_mode": "yes_no_with_detail",
+                "fields": [
+                  "mortgage_contract_yes",
+                  "mortgage_contract_no",
+                  "mortgage_contract_detail"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "fact_element_8",
+            "title": "8. 申请鉴定及其他实现债权费用的事实",
+            "ui_mode": "structured_form",
+            "sections": [
+              {
+                "label": "",
+                "ui_mode": "yes_no_with_detail",
+                "fields": [
+                  "appraisal_fact_yes",
+                  "appraisal_fact_no",
+                  "appraisal_fact_detail"
+                ]
               }
             ]
           },
           {
             "id": "fact_legal_basis",
-            "title": "请求依据与证据",
-            "fields": ["legal_basis_contract", "legal_basis_law", "evidence_list"]
+            "title": "9. 请求依据",
+            "ui_mode": "structured_form",
+            "sections": [
+              {
+                "label": "合同约定",
+                "fields": ["legal_basis_contract"]
+              },
+              {
+                "label": "法律规定",
+                "fields": ["legal_basis_law"]
+              }
+            ]
+          },
+          {
+            "id": "fact_evidence",
+            "title": "10. 证据清单（可另附页）",
+            "ui_mode": "structured_form",
+            "sections": [
+              {
+                "label": "",
+                "fields": ["evidence_list"]
+              }
+            ]
           }
         ]
       },
       {
         "id": "section_mediation",
         "title": "五、纠纷解决方式意愿",
-        "ui_mode": "accordion_questionnaire",
+        "description": "",
         "groups": [
           {
             "id": "mediation_q1",
             "title": "是否了解调解的非诉性质",
-            "fields": ["mediation_understand", "mediation_not_understand"]
+            "ui_mode": "structured_form",
+            "sections": [
+              {
+                "label": "",
+                "ui_mode": "single_choice",
+                "fields": ["mediation_understand", "mediation_not_understand"]
+              }
+            ]
           },
           {
             "id": "mediation_q2",
             "title": "是否了解先行调解的好处",
-            "type": "checklist_confirmation",
-            "sub_items": [
-              { "text": "快速启动程序", "fields": ["mediation_benefit1_understand", "mediation_benefit1_not_understand"] },
-              { "text": "费用减免政策", "fields": ["mediation_benefit2_understand", "mediation_benefit2_not_understand"] },
-              { "text": "灵活更换调解员", "fields": ["mediation_benefit3_understand", "mediation_benefit3_not_understand"] },
-              { "text": "保密性保障", "fields": ["mediation_benefit4_understand", "mediation_benefit4_not_understand"] },
-              { "text": "司法确认效力", "fields": ["mediation_benefit5_understand", "mediation_benefit5_not_understand"] }
+            "ui_mode": "structured_form",
+            "sections": [
+              {
+                "label": "快速启动程序",
+                "fields": ["mediation_benefit1_understand", "mediation_benefit1_not_understand"]
+              },
+              {
+                "label": "费用减免政策",
+                "fields": ["mediation_benefit2_understand", "mediation_benefit2_not_understand"]
+              },
+              {
+                "label": "灵活更换调解员",
+                "fields": ["mediation_benefit3_understand", "mediation_benefit3_not_understand"]
+              },
+              {
+                "label": "保密性保障",
+                "fields": ["mediation_benefit4_understand", "mediation_benefit4_not_understand"]
+              },
+              {
+                "label": "司法确认效力",
+                "fields": ["mediation_benefit5_understand", "mediation_benefit5_not_understand"]
+              }
             ]
           },
           {
             "id": "mediation_decision",
             "title": "是否考虑先行调解",
-            "fields": ["consider_mediation_yes", "consider_mediation_no", "consider_mediation_uncertain"]
+            "ui_mode": "structured_form",
+            "sections": [
+              {
+                "label": "",
+                "ui_mode": "single_choice",
+                "fields": ["consider_mediation_yes", "consider_mediation_no", "consider_mediation_uncertain"]
+              }
+            ]
           }
         ]
       }

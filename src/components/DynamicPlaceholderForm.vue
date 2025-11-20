@@ -2,9 +2,30 @@
   <div class="dynamic-form">
     <!-- 表单头部：显示标题和字段数量 -->
     <div class="form-header">
-      <h3>填充文档</h3>
-      <el-tag type="success" round>{{ placeholders.length }} 个字段</el-tag>
+      <h3>{{ templateConfig?.template_config?.template_name || '填充文档' }}</h3>
+      <div class="header-actions">
+        <el-button size="small" @click="showImportDialog = true">导入JSON</el-button>
+        <el-tag type="success" round>{{ placeholders.length }} 个字段</el-tag>
+      </div>
     </div>
+
+    <!-- 导入JSON对话框 -->
+    <el-dialog
+      v-model="showImportDialog"
+      title="导入JSON数据"
+      width="600px"
+    >
+      <el-input
+        v-model="jsonInput"
+        type="textarea"
+        :rows="15"
+        placeholder="请粘贴JSON数据..."
+      />
+      <template #footer>
+        <el-button @click="showImportDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleImportJSON">导入</el-button>
+      </template>
+    </el-dialog>
 
     <!-- 空状态提示 -->
     <el-empty
@@ -104,6 +125,15 @@
                         <el-radio label="☑">是</el-radio>
                         <el-radio label="□">否</el-radio>
                       </el-radio-group>
+                      <el-date-picker
+                        v-else-if="isDateField(fieldName)"
+                        v-model="formData[fieldName]"
+                        type="date"
+                        placeholder="选择日期"
+                        format="YYYY年MM月DD日"
+                        value-format="YYYY-MM-DD"
+                        clearable
+                      />
                       <el-input
                         v-else-if="isTextareaField(fieldName)"
                         v-model="formData[fieldName]"
@@ -130,7 +160,27 @@
                       class="sub-group-container"
                     >
                       <h6 class="sub-group-title">{{ subGroup.label }}</h6>
-                      <div class="fields-container">
+                      
+                      <!-- 如果是单选组布尔类型，渲染为多选下拉框 -->
+                      <el-form-item v-if="subGroup.ui_mode === 'radio_group_boolean'" class="form-item">
+                        <el-select
+                          :model-value="getMultiSelectValue(subGroup.fields)"
+                          @update:model-value="handleMultiSelectChange(subGroup.fields, $event)"
+                          placeholder="请选择"
+                          multiple
+                          clearable
+                        >
+                          <el-option
+                            v-for="fieldName in subGroup.fields"
+                            :key="fieldName"
+                            :label="getPlaceholderLabel(fieldName)"
+                            :value="fieldName"
+                          />
+                        </el-select>
+                      </el-form-item>
+                      
+                      <!-- 否则按原来的方式渲染 -->
+                      <div v-else class="fields-container">
                         <template v-for="fieldName in subGroup.fields" :key="fieldName">
                           <el-form-item
                             v-if="shouldRenderField(fieldName)"
@@ -164,11 +214,212 @@
               </template>
 
               <!-- 
+                渲染模式 1.5: structured_form 类型
+                用于结构化表单，每个 section 包含标签和字段
+              -->
+              <template v-else-if="group.ui_mode === 'structured_form' && group.sections">
+                <div class="structured-form-container">
+                  <div
+                    v-for="(section, sectionIdx) in group.sections"
+                    :key="sectionIdx"
+                    class="structured-section"
+                  >
+                    <div class="structured-section-label">{{ section.label }}</div>
+                    <div class="structured-section-fields" :class="{ 'fields-horizontal': hasMultipleYesNoFields(section.fields) }">
+                      <!-- 单选模式：多个选项只能选一个 -->
+                      <template v-if="section.ui_mode === 'single_choice'">
+                        <el-radio-group
+                          :model-value="getSingleChoiceValue(section.fields)"
+                          @update:model-value="handleSingleChoiceChange(section.fields, $event)"
+                          class="single-choice-group"
+                        >
+                          <el-radio
+                            v-for="fieldName in section.fields"
+                            :key="fieldName"
+                            :label="fieldName"
+                          >
+                            {{ getPlaceholderLabel(fieldName) }}
+                          </el-radio>
+                        </el-radio-group>
+                      </template>
+                      
+                      <!-- 是/否带详情模式：是 ○ 否 ○ 具体情况[文本框] -->
+                      <template v-else-if="section.ui_mode === 'yes_no_with_detail'">
+                        <div class="yes-no-detail-container">
+                          <el-radio-group
+                            :model-value="getYesNoDetailValue(section.fields)"
+                            @update:model-value="handleYesNoDetailChange(section.fields, $event)"
+                            class="yes-no-detail-group"
+                          >
+                            <template v-for="fieldName in section.fields" :key="fieldName">
+                              <el-radio
+                                v-if="fieldName.endsWith('_yes') || fieldName.endsWith('_no')"
+                                :label="fieldName"
+                              >
+                                {{ getPlaceholderLabel(fieldName) }}
+                              </el-radio>
+                            </template>
+                          </el-radio-group>
+                          <template v-for="fieldName in section.fields" :key="'detail_' + fieldName">
+                            <div v-if="!fieldName.endsWith('_yes') && !fieldName.endsWith('_no')" class="detail-input-wrapper">
+                              <span class="detail-label">{{ getPlaceholderLabel(fieldName) }}：</span>
+                              <el-input
+                                v-if="isTextareaField(fieldName)"
+                                v-model="formData[fieldName]"
+                                type="textarea"
+                                :rows="3"
+                                placeholder="请输入内容"
+                                clearable
+                              />
+                              <el-input
+                                v-else
+                                v-model="formData[fieldName]"
+                                placeholder="请输入内容"
+                                clearable
+                              />
+                            </div>
+                          </template>
+                        </div>
+                      </template>
+                      
+                      <!-- 普通模式 -->
+                      <template v-else>
+                        <template v-for="fieldName in section.fields" :key="fieldName">
+                          <el-form-item
+                            v-if="shouldRenderField(fieldName)"
+                            class="form-item structured-field-item"
+                          >
+                            <template #label v-if="hasMultipleYesNoFields(section.fields) && isYesNoField(fieldName)">
+                              <span class="inline-field-label">{{ getPlaceholderLabel(fieldName) }}</span>
+                            </template>
+                            <el-radio-group
+                              v-if="shouldRenderGenderGroup(fieldName)"
+                              :model-value="getGenderValue(getGenderPrefix(fieldName))"
+                              @update:model-value="handleGenderChange(getGenderPrefix(fieldName), $event)"
+                              class="radio-group-inline"
+                            >
+                              <el-radio label="male" border>男</el-radio>
+                              <el-radio label="female" border>女</el-radio>
+                            </el-radio-group>
+                            <el-date-picker
+                              v-else-if="shouldRenderBirthDatePicker(fieldName)"
+                              :model-value="getBirthDateValue(getBirthDatePrefix(fieldName))"
+                              @update:model-value="handleBirthDateChange(getBirthDatePrefix(fieldName), $event)"
+                              type="date"
+                              placeholder="选择日期"
+                              format="YYYY年MM月DD日"
+                              value-format="YYYY-MM-DD"
+                              clearable
+                            />
+                            <el-radio-group
+                              v-else-if="isYesNoField(fieldName)"
+                              v-model="formData[fieldName]"
+                              class="yes-no-radio-group"
+                            >
+                              <el-radio label="☑">是</el-radio>
+                              <el-radio label="□">否</el-radio>
+                            </el-radio-group>
+                            <el-date-picker
+                              v-else-if="isDateField(fieldName)"
+                              v-model="formData[fieldName]"
+                              type="date"
+                              placeholder="选择日期"
+                              format="YYYY年MM月DD日"
+                              value-format="YYYY-MM-DD"
+                              clearable
+                            />
+                            <el-input
+                              v-else-if="isTextareaField(fieldName)"
+                              v-model="formData[fieldName]"
+                              type="textarea"
+                              :rows="5"
+                              placeholder="请输入内容"
+                              clearable
+                            />
+                            <el-input
+                              v-else
+                              v-model="formData[fieldName]"
+                              placeholder="请输入内容"
+                              clearable
+                            />
+                          </el-form-item>
+                        </template>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </template>
+
+              <!-- 
                 渲染模式 2: 直接 fields 类型
                 用于简单的字段列表，如 "事实与理由概述"
               -->
               <template v-else-if="group.fields">
-                <div class="fields-container">
+                <!-- 如果是 radio_group_boolean 且有 detail_fields，特殊处理 -->
+                <template v-if="group.ui_mode === 'radio_group_boolean' && group.detail_fields">
+                  <!-- 渲染触发字段（有/无选项） -->
+                  <el-form-item v-if="group.fields && group.fields.length >= 2" class="form-item trigger-field">
+                    <el-radio-group
+                      :model-value="getTriggerValue(group.fields[0], group.fields[1])"
+                      @update:model-value="handleTriggerChange(group.fields[0], group.fields[1], $event)"
+                      class="trigger-radio-group"
+                    >
+                      <el-radio label="true">有</el-radio>
+                      <el-radio label="false">无</el-radio>
+                    </el-radio-group>
+                  </el-form-item>
+                  
+                  <!-- 渲染详细字段 -->
+                  <div class="fields-container">
+                    <template v-for="fieldName in group.detail_fields" :key="fieldName">
+                      <el-form-item
+                        v-if="shouldRenderField(fieldName)"
+                        class="form-item"
+                      >
+                      <template #label>
+                        <span class="label-text">{{
+                          getPlaceholderLabel(fieldName)
+                        }}</span>
+                      </template>
+                      <el-checkbox
+                        v-if="isYesNoField(fieldName)"
+                        v-model="formData[fieldName]"
+                        true-label="☑"
+                        false-label="□"
+                        class="yes-no-checkbox"
+                      >
+                        {{ formData[fieldName] === '☑' ? '是' : '否' }}
+                      </el-checkbox>
+                      <el-date-picker
+                        v-else-if="isDateField(fieldName)"
+                        v-model="formData[fieldName]"
+                        type="date"
+                        placeholder="选择日期"
+                        format="YYYY年MM月DD日"
+                        value-format="YYYY-MM-DD"
+                        clearable
+                      />
+                      <el-input
+                        v-else-if="isTextareaField(fieldName)"
+                        v-model="formData[fieldName]"
+                        type="textarea"
+                        :rows="5"
+                        placeholder="请输入内容"
+                        clearable
+                      />
+                      <el-input
+                        v-else
+                        v-model="formData[fieldName]"
+                        placeholder="请输入内容"
+                        clearable
+                      />
+                    </el-form-item>
+                    </template>
+                  </div>
+                </template>
+                
+                <!-- 否则按原来的方式渲染 -->
+                <div v-else class="fields-container">
                   <template v-for="fieldName in group.fields" :key="fieldName">
                     <el-form-item
                       v-if="shouldRenderField(fieldName)"
@@ -179,14 +430,24 @@
                         getPlaceholderLabel(fieldName)
                       }}</span>
                     </template>
-                    <el-radio-group
+                    <el-checkbox
                       v-if="isYesNoField(fieldName)"
                       v-model="formData[fieldName]"
-                      class="yes-no-radio-group"
+                      true-label="☑"
+                      false-label="□"
+                      class="yes-no-checkbox"
                     >
-                      <el-radio label="☑">是</el-radio>
-                      <el-radio label="□">否</el-radio>
-                    </el-radio-group>
+                      {{ formData[fieldName] === '☑' ? '是' : '否' }}
+                    </el-checkbox>
+                    <el-date-picker
+                      v-else-if="isDateField(fieldName)"
+                      v-model="formData[fieldName]"
+                      type="date"
+                      placeholder="选择日期"
+                      format="YYYY年MM月DD日"
+                      value-format="YYYY-MM-DD"
+                      clearable
+                    />
                     <el-input
                       v-else-if="isTextareaField(fieldName)"
                       v-model="formData[fieldName]"
@@ -213,7 +474,27 @@
                     class="sub-group-container"
                   >
                     <h6 class="sub-group-title">{{ subGroup.label }}</h6>
-                    <div class="fields-container">
+                    
+                    <!-- 如果是单选组布尔类型，渲染为多选下拉框 -->
+                    <el-form-item v-if="subGroup.ui_mode === 'radio_group_boolean'" class="form-item">
+                      <el-select
+                        :model-value="getMultiSelectValue(subGroup.fields)"
+                        @update:model-value="handleMultiSelectChange(subGroup.fields, $event)"
+                        placeholder="请选择"
+                        multiple
+                        clearable
+                      >
+                        <el-option
+                          v-for="fieldName in subGroup.fields"
+                          :key="fieldName"
+                          :label="getPlaceholderLabel(fieldName)"
+                          :value="fieldName"
+                        />
+                      </el-select>
+                    </el-form-item>
+                    
+                    <!-- 否则按原来的方式渲染 -->
+                    <div v-else class="fields-container">
                       <template v-for="fieldName in subGroup.fields" :key="fieldName">
                         <el-form-item
                           v-if="shouldRenderField(fieldName)"
@@ -250,6 +531,19 @@
                 用于条件激活的详细字段，如 "房屋买卖合同关系" 的具体主张
               -->
               <template v-else-if="group.detail_fields">
+                <!-- 如果有触发字段，先显示触发选项 -->
+                <el-form-item v-if="group.trigger_field_true && group.trigger_field_false" class="form-item trigger-field">
+                  <el-radio-group
+                    :model-value="getTriggerValue(group.trigger_field_true, group.trigger_field_false)"
+                    @update:model-value="handleTriggerChange(group.trigger_field_true, group.trigger_field_false, $event)"
+                    class="trigger-radio-group"
+                  >
+                    <el-radio label="true">有此问题</el-radio>
+                    <el-radio label="false">无此问题</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+                
+                <!-- 详细字段始终显示，不受触发字段影响 -->
                 <div class="fields-container">
                   <template v-for="fieldName in group.detail_fields" :key="fieldName">
                     <el-form-item
@@ -261,14 +555,24 @@
                         getPlaceholderLabel(fieldName)
                       }}</span>
                     </template>
-                    <el-radio-group
+                    <el-checkbox
                       v-if="isYesNoField(fieldName)"
                       v-model="formData[fieldName]"
-                      class="yes-no-radio-group"
+                      true-label="☑"
+                      false-label="□"
+                      class="yes-no-checkbox"
                     >
-                      <el-radio label="☑">是</el-radio>
-                      <el-radio label="□">否</el-radio>
-                    </el-radio-group>
+                      {{ formData[fieldName] === '☑' ? '是' : '否' }}
+                    </el-checkbox>
+                    <el-date-picker
+                      v-else-if="isDateField(fieldName)"
+                      v-model="formData[fieldName]"
+                      type="date"
+                      placeholder="选择日期"
+                      format="YYYY年MM月DD日"
+                      value-format="YYYY-MM-DD"
+                      clearable
+                    />
                     <el-input
                       v-else-if="isTextareaField(fieldName)"
                       v-model="formData[fieldName]"
@@ -308,6 +612,7 @@
  */
 
 import { ref, watch, computed } from "vue";
+import { ElMessage } from 'element-plus';
 
 /**
  * 防抖函数
@@ -341,6 +646,9 @@ const emit = defineEmits(["preview-update"]);
 const formData = ref({});
 // 当前展开的折叠面板组
 const activeGroups = ref([]);
+// 导入JSON对话框
+const showImportDialog = ref(false);
+const jsonInput = ref('');
 
 // ==================== 计算属性 ====================
 /**
@@ -439,6 +747,14 @@ const isGenderField = (name) =>
 const isCheckboxField = (name) => {
   // 性别字段不是复选框
   if (isGenderField(name)) return false;
+
+  // 文本字段不是复选框（包含 _detail, _content, _reason 等）
+  if (name.includes("_detail") || name.includes("_content") || name.includes("_reason") || 
+      name.includes("_reasons") || name.includes("_requirement") || name.includes("_agreement") ||
+      name.includes("_list") || name.includes("_addr") || name.includes("_address") || 
+      name.includes("_location")) {
+    return false;
+  }
 
   // 成对字段判断：只有肯定项（_yes, _understand, _has）才是复选框
   const paired =
@@ -549,13 +865,136 @@ const getGenderValue = (prefix) => {
  * 跳过规则：
  * - gender_f（女）字段：因为已经在 gender_m 时一起渲染
  * - birth_m 和 birth_d 字段：因为已经在 birth_y 时一起渲染为日期选择器
+ * - _no 字段：因为已经在对应的 _yes 字段时一起渲染
+ * - _preliminary 字段：因为已经在 _formal 字段时一起渲染
  */
 const shouldRenderField = (name) => {
   // 跳过 gender_f，因为性别在 gender_m 时一起渲染
   if (name.includes("gender_f")) return false;
   // 跳过 birth_m 和 birth_d，因为出生日期在 birth_y 时一起渲染
   if (name.includes("birth_m") || name.includes("birth_d")) return false;
+  // 跳过 _no 字段，因为在 _yes 字段时一起渲染
+  if (name.endsWith("_no")) return false;
+  // 跳过 _preliminary 字段，因为在 _formal 字段时一起渲染
+  if (name.endsWith("_preliminary")) return false;
   return true;
+};
+
+/**
+ * 判断是否为成对的是/否字段
+ * @param {string} name - 字段名称
+ * @returns {boolean} 是否为成对字段
+ */
+const isPairedYesNoField = (name) => {
+  return name.endsWith("_yes") || name.endsWith("_formal");
+};
+
+/**
+ * 获取成对字段的配对字段名
+ * @param {string} name - 字段名称
+ * @returns {string} 配对字段名
+ */
+const getPairedFieldName = (name) => {
+  if (name.endsWith("_yes")) {
+    return name.replace("_yes", "_no");
+  }
+  if (name.endsWith("_formal")) {
+    return name.replace("_formal", "_preliminary");
+  }
+  return null;
+};
+
+/**
+ * 获取成对字段的当前值
+ * @param {string} yesField - "是"字段名
+ * @param {string} noField - "否"字段名
+ * @returns {string} "yes" 或 "no"
+ */
+const getPairedFieldValue = (yesField, noField) => {
+  if (formData.value[yesField] === '☑') return 'yes';
+  if (formData.value[noField] === '☑') return 'no';
+  return 'no'; // 默认为"否"
+};
+
+/**
+ * 处理成对字段变化
+ * @param {string} yesField - "是"字段名
+ * @param {string} noField - "否"字段名
+ * @param {string} value - "yes" 或 "no"
+ */
+const handlePairedFieldChange = (yesField, noField, value) => {
+  if (value === 'yes') {
+    formData.value[yesField] = '☑';
+    formData.value[noField] = '□';
+  } else {
+    formData.value[yesField] = '□';
+    formData.value[noField] = '☑';
+  }
+};
+
+/**
+ * 获取成对字段的标签（去掉后缀）
+ * @param {string} name - 字段名称
+ * @returns {string} 清理后的标签
+ */
+const getPairedFieldLabel = (name) => {
+  const label = props.placeholderMapping?.[name] || name;
+  // 去掉标签末尾的"是"、"否"、"本约"、"预约"等
+  return label.replace(/[是否本约预]$/, '');
+};
+
+/**
+ * 获取多选组的当前选中值
+ * @param {Array} fields - 字段名称数组
+ * @returns {Array} 当前选中的字段名数组
+ *
+ * 遍历所有字段，找到值为 ☑ 的字段
+ */
+const getMultiSelectValue = (fields) => {
+  return fields.filter(field => formData.value[field] === '☑');
+};
+
+/**
+ * 处理多选组选择变化
+ * @param {Array} fields - 字段名称数组
+ * @param {Array} selectedFields - 选中的字段名数组
+ *
+ * 将选中的字段设置为 ☑，未选中的字段设置为 □
+ */
+const handleMultiSelectChange = (fields, selectedFields) => {
+  fields.forEach(field => {
+    formData.value[field] = selectedFields.includes(field) ? '☑' : '□';
+  });
+};
+
+/**
+ * 获取触发字段的当前值
+ * @param {string} trueField - "有此问题"对应的字段
+ * @param {string} falseField - "无此问题"对应的字段
+ * @returns {string} "true" 或 "false"
+ */
+const getTriggerValue = (trueField, falseField) => {
+  if (formData.value[trueField] === '☑') return 'true';
+  if (formData.value[falseField] === '☑') return 'false';
+  return 'false'; // 默认为"无此问题"
+};
+
+/**
+ * 处理触发字段变化
+ * @param {string} trueField - "有此问题"对应的字段
+ * @param {string} falseField - "无此问题"对应的字段
+ * @param {string} value - "true" 或 "false"
+ *
+ * 互斥逻辑：选择"有此问题"或"无此问题"
+ */
+const handleTriggerChange = (trueField, falseField, value) => {
+  if (value === 'true') {
+    formData.value[trueField] = '☑';
+    formData.value[falseField] = '□';
+  } else {
+    formData.value[trueField] = '□';
+    formData.value[falseField] = '☑';
+  }
 };
 
 /**
@@ -567,6 +1006,18 @@ const shouldRenderField = (name) => {
  */
 const isBirthDateField = (name) =>
   name.includes("birth_y") || name.includes("birth_m") || name.includes("birth_d");
+
+/**
+ * 判断是否为日期字段（单个日期选择器）
+ * @param {string} name - 字段名称
+ * @returns {boolean} 是否为日期字段
+ *
+ * 日期字段命名规则：包含 _time 或 _date（但不是出生日期）
+ */
+const isDateField = (name) => {
+  if (isBirthDateField(name)) return false;
+  return name.includes("_time") || name.includes("_date");
+};
 
 /**
  * 从出生日期字段名中提取前缀
@@ -678,7 +1129,103 @@ const isTextareaField = (name) => {
   );
 };
 
+/**
+ * 判断字段数组中是否有多个是/否字段
+ * @param {Array} fields - 字段名称数组
+ * @returns {boolean} 是否有多个是/否字段
+ */
+const hasMultipleYesNoFields = (fields) => {
+  if (!fields || fields.length === 0) return false;
+  const yesNoFields = fields.filter(f => isYesNoField(f) && shouldRenderField(f));
+  return yesNoFields.length > 1;
+};
+
+/**
+ * 判断是否为带详情的是/否字段组合
+ * @param {Array} fields - 字段名称数组
+ * @returns {boolean} 是否为带详情的是/否组合
+ */
+const hasYesNoWithDetail = (fields) => {
+  if (!fields || fields.length !== 2) return false;
+  const yesNoCount = fields.filter(f => isYesNoField(f)).length;
+  const otherCount = fields.filter(f => !isYesNoField(f)).length;
+  return yesNoCount === 1 && otherCount === 1;
+};
+
+/**
+ * 获取单选组的当前选中值
+ * @param {Array} fields - 字段名称数组
+ * @returns {string|null} 当前选中的字段名
+ */
+const getSingleChoiceValue = (fields) => {
+  if (!fields || fields.length === 0) return null;
+  // 找到值为 ☑ 的字段
+  const selected = fields.find(field => formData.value[field] === '☑');
+  return selected || null;
+};
+
+/**
+ * 处理单选组选择变化
+ * @param {Array} fields - 字段名称数组
+ * @param {string} selectedField - 选中的字段名
+ */
+const handleSingleChoiceChange = (fields, selectedField) => {
+  if (!fields || fields.length === 0) return;
+  // 将所有字段设置为 □，只有选中的设置为 ☑
+  fields.forEach(field => {
+    formData.value[field] = field === selectedField ? '☑' : '□';
+  });
+};
+
+/**
+ * 获取是/否带详情组的当前选中值
+ * @param {Array} fields - 字段名称数组
+ * @returns {string|null} 当前选中的字段名
+ */
+const getYesNoDetailValue = (fields) => {
+  if (!fields || fields.length === 0) return null;
+  const yesNoFields = fields.filter(f => f.endsWith('_yes') || f.endsWith('_no'));
+  const selected = yesNoFields.find(field => formData.value[field] === '☑');
+  return selected || null;
+};
+
+/**
+ * 处理是/否带详情组选择变化
+ * @param {Array} fields - 字段名称数组
+ * @param {string} selectedField - 选中的字段名
+ */
+const handleYesNoDetailChange = (fields, selectedField) => {
+  if (!fields || fields.length === 0) return;
+  const yesNoFields = fields.filter(f => f.endsWith('_yes') || f.endsWith('_no'));
+  // 将所有是/否字段设置为 □，只有选中的设置为 ☑
+  yesNoFields.forEach(field => {
+    formData.value[field] = field === selectedField ? '☑' : '□';
+  });
+};
+
 // ==================== 组件暴露 ====================
+/**
+ * 处理导入JSON
+ */
+const handleImportJSON = () => {
+  try {
+    const data = JSON.parse(jsonInput.value);
+    
+    // 将JSON数据合并到formData中
+    Object.entries(data).forEach(([key, value]) => {
+      if (formData.value.hasOwnProperty(key)) {
+        formData.value[key] = value;
+      }
+    });
+    
+    ElMessage.success('JSON数据导入成功');
+    showImportDialog.value = false;
+    jsonInput.value = '';
+  } catch (error) {
+    ElMessage.error('JSON格式错误：' + error.message);
+  }
+};
+
 /**
  * 向父组件暴露 formData
  * 父组件可以通过 ref 访问表单数据，用于生成文档
@@ -700,6 +1247,11 @@ defineExpose({ formData });
   margin: 0;
   font-size: 20px;
   color: #303133;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .form-collapse {
   border: none;
@@ -762,20 +1314,16 @@ defineExpose({ formData });
 }
 .sub-group-container {
   margin-bottom: 16px;
-  padding: 12px;
-  background: #fff;
-  border-radius: 6px;
-  border-left: 3px solid #67c23a;
 }
 .sub-group-title {
-  margin: 0 0 12px 0;
+  margin: 0 0 8px 0;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: #606266;
 }
 .fields-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 .form-item {
@@ -838,9 +1386,146 @@ defineExpose({ formData });
   margin-left: 0 !important;
 }
 
-@media (max-width: 768px) {
-  .fields-container {
-    grid-template-columns: 1fr;
-  }
+/* 触发字段单选按钮组样式 - 垂直排列 */
+.trigger-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
+
+.trigger-radio-group :deep(.el-radio) {
+  margin-right: 0;
+}
+
+/* 结构化表单样式 */
+.structured-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.structured-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.structured-section:last-child {
+  border-bottom: none;
+}
+
+.structured-section-label {
+  flex-shrink: 0;
+  width: 200px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #606266;
+  line-height: 32px;
+  text-align: left;
+  padding-right: 12px;
+}
+
+.structured-section-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 当有多个是/否字段时，横向排列 */
+.structured-section-fields.fields-horizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+}
+
+.structured-field-item {
+  margin-bottom: 0 !important;
+}
+
+.structured-field-item :deep(.el-form-item__label) {
+  display: none;
+}
+
+.structured-field-item :deep(.el-form-item__content) {
+  margin-left: 0 !important;
+}
+
+/* 横向排列时显示内联标签 */
+.fields-horizontal .structured-field-item :deep(.el-form-item__label) {
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.inline-field-label {
+  font-weight: normal;
+}
+
+/* 单选组样式 */
+.single-choice-group {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.single-choice-group :deep(.el-radio) {
+  margin-right: 0;
+}
+
+.single-choice-group :deep(.el-radio__label) {
+  padding-left: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+
+/* 是/否带详情组样式 */
+.yes-no-detail-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.yes-no-detail-group {
+  display: flex;
+  gap: 24px;
+}
+
+.yes-no-detail-group :deep(.el-radio) {
+  margin-right: 0;
+}
+
+.yes-no-detail-group :deep(.el-radio__label) {
+  padding-left: 8px;
+  font-size: 14px;
+  color: #606266;
+}
+
+.detail-input-wrapper {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.detail-label {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: #606266;
+  white-space: nowrap;
+  line-height: 32px;
+}
+
+.detail-input-wrapper .el-input {
+  flex: 1;
+}
+
+.detail-input-wrapper .el-textarea {
+  flex: 1;
+}
+
 </style>
